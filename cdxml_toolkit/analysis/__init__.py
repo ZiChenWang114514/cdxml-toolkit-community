@@ -13,7 +13,8 @@ assembles lab book entries.  Two workflows:
      mass resolution, multi-file LCMS collation, species identification, and
      output formatting in a single pipeline.
 
-Optional dependency: ``pdfplumber`` (install via ``pip install cdxml-toolkit[analysis]``).
+Optional dependency: ``pdfplumber`` (install via
+``pip install cdxml-toolkit-community[analysis]``).
 """
 
 # Agent-driven tools (top-level in analysis/)

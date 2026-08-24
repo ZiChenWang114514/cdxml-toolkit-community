@@ -3,6 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 *.egg-info/
+.venv/
 dist/
 build/
 
@@ -16,6 +17,8 @@ build/
 test_output/
 exploration/test_*
 .pytest_cache/
+.coverage
+htmlcov/
 
 # Pipeline output directories (user-specific)
 output*/

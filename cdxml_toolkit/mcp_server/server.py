@@ -31,6 +31,10 @@ import os
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
+from ._compat import install_legacy_fastmcp_alias
+
+install_legacy_fastmcp_alias()
+
 from mcp.server.fastmcp import FastMCP
 import functools
 
@@ -791,7 +795,7 @@ async def extract_structures_from_image(
             "ok": False,
             "error": (
                 f"DECIMER/OpenCV not available: {e}. "
-                "Install with: pip install cdxml-toolkit[decimer]"
+                "Install with: pip install cdxml-toolkit-community[decimer]"
             ),
         }
 
@@ -1001,7 +1005,7 @@ def parse_analysis_file(
             "ok": False,
             "error": (
                 f"parse_analysis_file module not available: {e}. "
-                "Install with: pip install cdxml-toolkit[analysis]"
+                "Install with: pip install cdxml-toolkit-community[analysis]"
             ),
         }
 

@@ -3,14 +3,17 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cdxml-toolkit"
-version = "0.5.17"
-description = "MCP server and Python toolkit for perception, rendering, and analysis of molecules and reaction schemes in ChemDraw CDXML."
+name = "cdxml-toolkit-community"
+version = "0.6.0a1"
+description = "Community-maintained MCP server and Python toolkit for ChemDraw CDXML workflows."
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10,<3.14"
 authors = [
     {name = "Hiu Fung Kevin Lee"},
+]
+maintainers = [
+    {name = "ZiChenWang114514"},
 ]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -26,31 +29,66 @@ classifiers = [
 dependencies = [
     "lxml>=4.6",
     "rdkit>=2023.03",
-    "pywin32>=300",
-    "opencv-python>=4.5",
     "Pillow>=9.0",
-    "python-pptx>=0.6",
-    "python-docx>=0.8",
-    "olefile>=0.46",
     "pyyaml>=5.4",
-    "mcp>=1.0",
-    "pdfplumber>=0.7",
-    "pythonnet>=3.0",
-    "tensorflow>=2.16",
-    "decimer>=2.6",
-    "pymupdf>=1.20",
-    "pytesseract>=0.3",
-    "py2opsin>=1.0",
-    "pytest>=7.0",
+    "mcp>=1.0,<3",
 ]
 
 [project.optional-dependencies]
-dev = ["cdxml-toolkit", "pytest>=7.0"]
+windows = [
+    "pywin32>=300; platform_system == 'Windows'",
+]
+office = [
+    "pywin32>=300; platform_system == 'Windows'",
+    "python-pptx>=0.6",
+    "python-docx>=0.8",
+    "olefile>=0.46",
+]
+chemscript = [
+    "pythonnet>=3.0",
+]
+analysis = [
+    "pdfplumber>=0.7",
+    "pymupdf>=1.20",
+]
+image = [
+    "opencv-python>=4.5",
+    "pytesseract>=0.3",
+]
+decimer = [
+    "opencv-python>=4.5",
+    "pytesseract>=0.3",
+    "tensorflow>=2.16",
+    "decimer>=2.6",
+]
+opsin = [
+    "py2opsin>=1.0",
+]
+all = [
+    "pywin32>=300; platform_system == 'Windows'",
+    "python-pptx>=0.6",
+    "python-docx>=0.8",
+    "olefile>=0.46",
+    "pythonnet>=3.0",
+    "pdfplumber>=0.7",
+    "pymupdf>=1.20",
+    "opencv-python>=4.5",
+    "pytesseract>=0.3",
+    "tensorflow>=2.16",
+    "decimer>=2.6",
+    "py2opsin>=1.0",
+]
+dev = [
+    "build>=1.2",
+    "pytest>=7.0",
+    "twine>=5.0",
+]
 
 [project.urls]
-Homepage = "https://github.com/leehiufung911/cdxml-toolkit"
-Repository = "https://github.com/leehiufung911/cdxml-toolkit"
-Issues = "https://github.com/leehiufung911/cdxml-toolkit/issues"
+Homepage = "https://github.com/ZiChenWang114514/cdxml-toolkit-community"
+Repository = "https://github.com/ZiChenWang114514/cdxml-toolkit-community"
+Issues = "https://github.com/ZiChenWang114514/cdxml-toolkit-community/issues"
+Upstream = "https://github.com/leehiufung911/cdxml-toolkit"
 
 [project.scripts]
 cdxml-render = "cdxml_toolkit.render.render_scheme:main"

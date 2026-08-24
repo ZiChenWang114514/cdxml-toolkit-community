@@ -145,7 +145,7 @@ def _load_decimer(hand_drawn: bool = False):
         except ImportError as exc:
             raise ImportError(
                 "DECIMER is not installed. Run:\n"
-                "  pip install cdxml-toolkit[decimer]\n"
+                "  pip install cdxml-toolkit-community[decimer]\n"
                 f"Original error: {exc}"
             ) from exc
 

@@ -1,5 +1,13 @@
 # Third-Party Notices
 
+## Community maintenance
+
+This repository is maintained by ZiChenWang114514 as an independent community
+continuation of Hiu Fung Kevin Lee's original `cdxml-toolkit` project. The
+original Git history, copyright notice, MIT license, and attribution are
+preserved. Community modifications are copyright 2026 ZiChenWang114514 and
+contributors under the same MIT license.
+
 This project includes data and code derived from the following sources.
 
 ## ChemScanner (data source)

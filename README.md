@@ -1,32 +1,50 @@
-# cdxml-toolkit
+# cdxml-toolkit-community
+
+[![Validate](https://github.com/ZiChenWang114514/cdxml-toolkit-community/actions/workflows/validate.yml/badge.svg)](https://github.com/ZiChenWang114514/cdxml-toolkit-community/actions/workflows/validate.yml)
+[![Python 3.10-3.13](https://img.shields.io/badge/Python-3.10--3.13-3776AB)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-2f855a.svg)](LICENSE)
+
+Community-maintained continuation of
+[`leehiufung911/cdxml-toolkit`](https://github.com/leehiufung911/cdxml-toolkit).
+The distribution name is `cdxml-toolkit-community`; the compatible Python
+import remains `cdxml_toolkit`.
 
 Chemistry office automation toolkit with MCP (Model Context Protocol) server. Lets LLM agents draw reaction schemes, parse ELN exports, analyze LCMS data, and produce publication-ready ChemDraw (CDXML) output.
 
 The goal: any chemist with a consumer GPU can run a local LLM agent that helps with routine chemistry office tasks. The toolkit provides 15 grounded, validated chemistry tools that LLMs call via MCP — the agent reasons about chemistry while the tools handle SMILES resolution, 2D coordinate generation, and CDXML layout.
 
-> Built and tested with Claude Code (Opus 4.6). I directed the design and architecture; Claude did the implementation. I'm a PhD organic chemist, not a programmer — this project wouldn't exist without Claude Code, and I thank Anthropic. 
+> Original project statement: Built and tested with Claude Code (Opus 4.6).
+> The original design and implementation were directed by Hiu Fung Kevin Lee,
+> a PhD organic chemist.
 
 ![Agent builds a 3-step reaction scheme from an image and natural language instructions](docs/images/showcase-example.webp)
 
 *The user pastes an image of a Boc deprotection, asks for a modified version with a different scaffold plus two extra reaction steps. The agent resolves all building blocks, applies transformations with structural diffs, and renders a .cdxml native 3-step scheme — all via MCP tool calls, no hand-written SMILES.*
-
-**[Explanation/Showcase](SHOWCASE.md)**
 
 ## Installation
 
 **Prerequisites:** Windows with ChemDraw (ChemOffice 2015+) installed. Python 3.10–3.13 (3.14 is not yet supported by TensorFlow/DECIMER).
 
 ```bash
-# 1. Create a conda environment and install
+# 1. Create a conda environment and clone the community project
 conda create -n cdxml python=3.12 pip -y
 conda activate cdxml
-pip install cdxml-toolkit
+git clone https://github.com/ZiChenWang114514/cdxml-toolkit-community.git
+cd cdxml-toolkit-community
+
+# Core toolkit and MCP server
+pip install -e .
+
+# Complete optional feature set
+pip install -e ".[all]"
 
 # 2. Run the doctor to check your setup
 cdxml-doctor --no-tests
 ```
 
-Everything is included by default: RDKit, MCP server, ChemDraw COM, Office support, PDF analysis, image processing, DECIMER neural image extraction, OPSIN, and OCR.
+The core installation includes CDXML utilities, RDKit, rendering, and the MCP
+server. Optional dependency groups are `windows`, `office`, `chemscript`,
+`analysis`, `image`, `decimer`, `opsin`, `all`, and `dev`.
 
 On first run, `cdxml-doctor` will extract the bundled JRE for OPSIN (~45 MB, one-time) and download DECIMER neural models (~570 MB). Subsequent runs are fast.
 
@@ -59,10 +77,10 @@ Run `cdxml-doctor --no-tests` again to confirm ChemScript shows OK.
 
 ChemScript is optional — without it, OPSIN handles IUPAC name resolution as an offline fallback. ChemScript adds bidirectional name-to-structure conversion and aligned naming.
 
-Alternatively, install from GitHub for the latest development version:
+To install the latest community development version directly from GitHub:
 
 ```bash
-pip install "cdxml-toolkit @ git+https://github.com/leehiufung911/cdxml-toolkit.git@main"
+pip install "cdxml-toolkit-community[all] @ git+https://github.com/ZiChenWang114514/cdxml-toolkit-community.git@main"
 ```
 
 ## MCP server (Claude Desktop)
@@ -227,8 +245,16 @@ cdxml-render --from-json reaction.json -o scheme.cdxml
 cdxml-doctor
 
 # Or directly with pytest
-pytest tests/ -v
+pytest -m "not network" -v
+
+# Build and inspect distribution artifacts
+python -m build
+python -m twine check dist/*
 ```
+
+See the [maintenance guide](docs/maintenance.md),
+[contribution guide](.github/contributing.md), and
+[security policy](.github/SECURITY.md) before proposing or releasing changes.
 
 ## License
 
@@ -238,6 +264,8 @@ pytest tests/ -v
 
 See [NOTICE.md](NOTICE.md) for third-party data attribution (ChemScanner, RDKit).
 
-## Author
+## Maintainers and upstream
 
-Hiu Fung Kevin Lee ([@leehiufung911](https://github.com/leehiufung911))
+- Community maintainer: [ZiChenWang114514](https://github.com/ZiChenWang114514)
+- Original author: Hiu Fung Kevin Lee ([@leehiufung911](https://github.com/leehiufung911))
+- Upstream project: [`leehiufung911/cdxml-toolkit`](https://github.com/leehiufung911/cdxml-toolkit)
