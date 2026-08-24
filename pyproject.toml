@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cdxml-toolkit-community"
-version = "0.6.0a1"
+version = "0.7.0a1"
 description = "Community-maintained MCP server and Python toolkit for ChemDraw CDXML workflows."
 readme = "README.md"
 license = "MIT"
@@ -32,6 +32,7 @@ dependencies = [
     "Pillow>=9.0",
     "pyyaml>=5.4",
     "mcp>=1.0,<3",
+    "tomlkit>=0.13",
 ]
 
 [project.optional-dependencies]
@@ -60,9 +61,18 @@ decimer = [
     "pytesseract>=0.3",
     "tensorflow>=2.16",
     "decimer>=2.6",
+    "requests>=2.31",
+]
+http = [
+    "uvicorn>=0.30",
+    "starlette>=0.37",
+    "tomlkit>=0.13",
 ]
 opsin = [
     "py2opsin>=1.0",
+    "requests>=2.31",
+    "uvicorn>=0.30",
+    "starlette>=0.37",
 ]
 all = [
     "pywin32>=300; platform_system == 'Windows'",
@@ -77,6 +87,9 @@ all = [
     "tensorflow>=2.16",
     "decimer>=2.6",
     "py2opsin>=1.0",
+    "requests>=2.31",
+    "uvicorn>=0.30",
+    "starlette>=0.37",
 ]
 dev = [
     "build>=1.2",
@@ -100,7 +113,9 @@ cdxml-polish = "cdxml_toolkit.deterministic_pipeline.legacy.scheme_polisher_v2:m
 cdxml-parse = "cdxml_toolkit.perception.reaction_parser:main"
 cdxml-merge = "cdxml_toolkit.layout.scheme_merger:main"
 cdxml-ole = "cdxml_toolkit.office.ole_embedder:main"
-cdxml-mcp = "cdxml_toolkit.mcp_server.server:main"
+cdxml-mcp = "cdxml_toolkit.mcp_runtime.mcp_server:main"
+cdxml-mcp-core = "cdxml_toolkit.mcp_server.server:main"
+cdxml-mcp-docs = "cdxml_toolkit.mcp_runtime.generate_reference:main"
 cdxml-lcms = "cdxml_toolkit.analysis.lcms_analyzer:main"
 cdxml-multi-lcms = "cdxml_toolkit.analysis.deterministic.multi_lcms_analyzer:main"
 cdxml-procedure = "cdxml_toolkit.analysis.deterministic.procedure_writer:main"
@@ -115,7 +130,6 @@ include = ["cdxml_toolkit*"]
 [tool.setuptools.package-data]
 "cdxml_toolkit.resolve" = ["*.json"]
 "cdxml_toolkit.naming" = ["*.json"]
-"cdxml_toolkit._jre" = ["*.zip"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 import re
+import tomlkit
 
 import cdxml_toolkit
 
@@ -30,3 +31,16 @@ def test_community_repository_urls_are_present() -> None:
     assert "ZiChenWang114514/cdxml-toolkit-community" in PYPROJECT
     assert "leehiufung911/cdxml-toolkit" in PYPROJECT
 
+
+def test_all_extra_contains_every_runtime_optional_dependency() -> None:
+    project = tomlkit.parse(PYPROJECT)["project"]
+    core = set(project["dependencies"])
+    extras = project["optional-dependencies"]
+    expected = {
+        requirement
+        for name, requirements in extras.items()
+        if name not in {"all", "dev"}
+        for requirement in requirements
+    } - core
+
+    assert expected <= set(extras["all"])

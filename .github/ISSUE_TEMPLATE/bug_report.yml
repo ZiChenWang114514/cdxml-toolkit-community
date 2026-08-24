@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: Version
-      placeholder: 0.6.0a1
+      placeholder: 0.7.0a1
     validations:
       required: true
   - type: dropdown
@@ -48,4 +48,3 @@ body:
       description: Windows, Python, ChemDraw, ChemScript, Office, and package versions.
     validations:
       required: true
-

@@ -7,6 +7,7 @@ ChemScript setup instructions when needed.
 """
 
 import os
+import json
 import subprocess
 import sys
 
@@ -106,7 +107,7 @@ def _print_diagnostics():
     return cs_ok
 
 
-def _setup_chemscript():
+def _setup_chemscript(*, assume_yes=False):
     """Detect ChemScript DLLs and interactively set up the environment."""
     from cdxml_toolkit.chemdraw.chemscript_bridge import (
         _find_chemdraw_root, _find_chemscript_dlls,
@@ -205,11 +206,14 @@ def _setup_chemscript():
     print(f"    {py32_path} -m pip install pythonnet")
     print()
 
-    try:
-        answer = input("  Proceed? [y/N] ").strip().lower()
-    except (EOFError, KeyboardInterrupt):
-        print("\n  Skipped.")
-        return
+    if assume_yes:
+        answer = "y"
+    else:
+        try:
+            answer = input("  Proceed? [y/N] ").strip().lower()
+        except (EOFError, KeyboardInterrupt):
+            print("\n  Skipped.")
+            return
 
     if answer not in ("y", "yes"):
         print("  Skipped.")
@@ -289,7 +293,33 @@ def main(argv=None):
     )
     parser.add_argument("--no-tests", action="store_true",
                         help="Skip running the test suite")
+    parser.add_argument(
+        "--json",
+        action="store_true",
+        help="Print a machine-readable, read-only capability report",
+    )
+    parser.add_argument(
+        "--configure-chemscript",
+        action="store_true",
+        help="Configure ChemScript after diagnostics",
+    )
+    parser.add_argument(
+        "--yes",
+        action="store_true",
+        help="Confirm ChemScript configuration without an interactive prompt",
+    )
     args = parser.parse_args(argv)
+
+    if args.yes and not args.configure_chemscript:
+        parser.error("--yes requires --configure-chemscript")
+    if args.json:
+        if args.configure_chemscript:
+            parser.error("--json cannot be combined with --configure-chemscript")
+        from cdxml_toolkit.mcp_runtime.runtime_diagnostics import diagnose_runtime
+
+        report = diagnose_runtime()
+        print(json.dumps(report, indent=2, default=str))
+        return 0 if report.get("ok") else 1
 
     cs_ok = _print_diagnostics()
 
@@ -299,8 +329,11 @@ def main(argv=None):
     else:
         exit_code = 0
 
-    if not cs_ok:
-        _setup_chemscript()
+    if not cs_ok and args.configure_chemscript:
+        _setup_chemscript(assume_yes=args.yes)
+    elif not cs_ok:
+        print("ChemScript configuration was not changed.")
+        print("Run cdxml-doctor --no-tests --configure-chemscript when ready.")
 
     return exit_code
 

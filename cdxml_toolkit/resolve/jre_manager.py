@@ -1,195 +1,201 @@
-"""Manage a bundled JRE for OPSIN.
-
-A JRE zip is shipped inside the package (``cdxml_toolkit/_jre/``).
-On first use it is extracted to ``~/.cdxml-toolkit/jre/`` so that
-py2opsin can run without requiring the user to install Java.
-
-Discovery order (used by :func:`get_java`):
-  1. System Java on PATH or JAVA_HOME
-  2. Already-extracted JRE at ``~/.cdxml-toolkit/jre/``
-  3. Extract from bundled zip (one-time, ~45 MB)
-  4. Download from Adoptium API (network fallback)
-"""
+"""Discover or explicitly install a Java runtime used by OPSIN."""
 
 from __future__ import annotations
 
-import io
+import hashlib
+import json
 import os
-import shutil
-import sys
-import zipfile
 from pathlib import Path
+import shutil
+import stat
+import tempfile
 from typing import Optional
+import urllib.request
+import zipfile
 
-# Where the extracted JRE lives
+
 _JRE_BASE = Path.home() / ".cdxml-toolkit" / "jre"
-
-# Bundled JRE zip inside the package
-_BUNDLED_ZIP = Path(__file__).resolve().parent.parent / "_jre" / "temurin-21-jre-win-x64.zip"
-
-# Network fallback URL (Adoptium API)
 _ADOPTIUM_URL = (
     "https://api.adoptium.net/v3/binary/latest/21/ga/windows/x64/jre/"
     "hotspot/normal/eclipse?project=jdk"
 )
-
-# Cached result
+_MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
+_MAX_EXTRACTED_BYTES = 768 * 1024 * 1024
 _java_exe: Optional[str] = None
 
 
 def _find_system_java() -> Optional[str]:
-    """Check PATH and JAVA_HOME for an existing java executable."""
     java = shutil.which("java")
     if java:
         return java
-
     java_home = os.environ.get("JAVA_HOME")
     if java_home:
         for name in ("java.exe", "java"):
-            candidate = os.path.join(java_home, "bin", name)
-            if os.path.isfile(candidate):
-                return candidate
+            candidate = Path(java_home) / "bin" / name
+            if candidate.is_file():
+                return str(candidate)
+    return None
+
+
+def _find_java_under(root: Path) -> Optional[str]:
+    if not root.is_dir():
+        return None
+    for executable in ("java.exe", "java"):
+        for candidate in root.glob(f"**/bin/{executable}"):
+            if candidate.is_file():
+                return str(candidate.resolve())
     return None
 
 
 def _find_extracted_java() -> Optional[str]:
-    """Check ~/.cdxml-toolkit/jre/ for an already-extracted JRE."""
-    if not _JRE_BASE.is_dir():
-        return None
-    # The zip extracts to a subdirectory like jdk-21.0.10+7-jre/
-    for entry in _JRE_BASE.iterdir():
-        if entry.is_dir():
-            for name in ("java.exe", "java"):
-                candidate = entry / "bin" / name
-                if candidate.is_file():
-                    return str(candidate)
-    return None
+    return _find_java_under(_JRE_BASE)
 
 
-def _extract_bundled_jre() -> Optional[str]:
-    """Extract the JRE zip shipped inside the package.
+def _sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
 
-    Returns the path to java.exe, or None if the bundled zip is missing.
-    """
-    if not _BUNDLED_ZIP.is_file():
-        return None
+
+def _safe_extract(archive: Path, destination: Path) -> None:
+    destination = destination.resolve()
+    total = 0
+    with zipfile.ZipFile(archive) as bundle:
+        for member in bundle.infolist():
+            total += max(0, member.file_size)
+            if total > _MAX_EXTRACTED_BYTES:
+                raise ValueError("JRE archive expands beyond the configured size limit")
+            mode = member.external_attr >> 16
+            if stat.S_ISLNK(mode):
+                raise ValueError("JRE archive contains a symbolic link")
+            target = (destination / member.filename).resolve()
+            try:
+                target.relative_to(destination)
+            except ValueError as exc:
+                raise ValueError("JRE archive contains an unsafe path") from exc
+        bundle.extractall(destination)
+
+
+def install_jre_archive(
+    archive_path: str | os.PathLike[str],
+    *,
+    expected_sha256: str | None = None,
+    source: str = "local",
+) -> Optional[str]:
+    """Verify and install a JRE ZIP without modifying an existing installation."""
+    archive = Path(archive_path).expanduser().resolve()
+    if not archive.is_file():
+        raise FileNotFoundError(f"JRE archive does not exist: {archive}")
+    if archive.stat().st_size > _MAX_ARCHIVE_BYTES:
+        raise ValueError("JRE archive exceeds the configured size limit")
+    actual_hash = _sha256(archive)
+    if expected_sha256 and actual_hash.lower() != expected_sha256.strip().lower():
+        raise ValueError("JRE archive SHA-256 does not match the approved value")
 
     _JRE_BASE.mkdir(parents=True, exist_ok=True)
+    destination = _JRE_BASE / f"temurin-{actual_hash[:16]}"
+    if destination.exists():
+        return _find_java_under(destination)
+    with tempfile.TemporaryDirectory(prefix="cdxml-jre-", dir=_JRE_BASE.parent) as temp_dir:
+        staged = Path(temp_dir) / "runtime"
+        staged.mkdir()
+        _safe_extract(archive, staged)
+        java = _find_java_under(staged)
+        if not java:
+            raise ValueError("JRE archive does not contain a Java executable")
+        os.replace(staged, destination)
+    manifest = {
+        "source": source,
+        "sha256": actual_hash,
+        "archive_bytes": archive.stat().st_size,
+    }
+    (destination / "cdxml-toolkit-install.json").write_text(
+        json.dumps(manifest, indent=2), encoding="utf-8", newline="\n"
+    )
+    return _find_java_under(destination)
 
-    print("  [cdxml-toolkit] Extracting bundled JRE (one-time)...",
-          file=sys.stderr)
-    try:
-        with zipfile.ZipFile(_BUNDLED_ZIP) as zf:
-            zf.extractall(_JRE_BASE)
-    except Exception as e:
-        print(f"  [cdxml-toolkit] JRE extraction failed: {e}", file=sys.stderr)
+
+def _configured_archive() -> tuple[Path, str | None] | None:
+    value = os.environ.get("CDXML_TOOLKIT_JRE_ZIP")
+    if not value:
         return None
-
-    java = _find_extracted_java()
-    if java:
-        print(f"  [cdxml-toolkit] JRE ready: {java}", file=sys.stderr)
-    return java
+    return Path(value).expanduser(), os.environ.get("CDXML_TOOLKIT_JRE_SHA256")
 
 
 def _download_jre() -> Optional[str]:
-    """Download Eclipse Temurin JRE 21 from Adoptium (network fallback).
-
-    Only used if the bundled zip is missing (e.g. minimal source install).
-    Returns the path to java.exe, or None on failure.
-    """
+    _JRE_BASE.parent.mkdir(parents=True, exist_ok=True)
+    request = urllib.request.Request(
+        _ADOPTIUM_URL,
+        headers={"User-Agent": "cdxml-toolkit-community/0.7"},
+    )
+    temporary: Path | None = None
     try:
-        import urllib.request
-    except ImportError:
-        return None
-
-    _JRE_BASE.mkdir(parents=True, exist_ok=True)
-
-    print("  [cdxml-toolkit] Downloading JRE for OPSIN (~45 MB)...",
-          file=sys.stderr)
-    try:
-        req = urllib.request.Request(
-            _ADOPTIUM_URL,
-            headers={"User-Agent": "cdxml-toolkit/0.5"},
+        with tempfile.NamedTemporaryFile(
+            prefix="cdxml-jre-download-",
+            suffix=".zip",
+            delete=False,
+            dir=_JRE_BASE.parent,
+        ) as target:
+            temporary = Path(target.name)
+            with urllib.request.urlopen(request, timeout=120) as response:
+                expected = response.headers.get("X-Checksum-Sha256")
+                written = 0
+                while True:
+                    block = response.read(1024 * 1024)
+                    if not block:
+                        break
+                    written += len(block)
+                    if written > _MAX_ARCHIVE_BYTES:
+                        raise ValueError("JRE download exceeds the configured size limit")
+                    target.write(block)
+        return install_jre_archive(
+            temporary,
+            expected_sha256=expected,
+            source="Adoptium API",
         )
-        with urllib.request.urlopen(req, timeout=120) as resp:
-            data = resp.read()
-    except Exception as e:
-        print(f"  [cdxml-toolkit] JRE download failed: {e}", file=sys.stderr)
+    except (OSError, ValueError, zipfile.BadZipFile):
         return None
-
-    print("  [cdxml-toolkit] Extracting JRE...", file=sys.stderr)
-    try:
-        with zipfile.ZipFile(io.BytesIO(data)) as zf:
-            zf.extractall(_JRE_BASE)
-    except Exception as e:
-        print(f"  [cdxml-toolkit] JRE extraction failed: {e}", file=sys.stderr)
-        return None
-
-    java = _find_extracted_java()
-    if java:
-        print(f"  [cdxml-toolkit] JRE ready: {java}", file=sys.stderr)
-    return java
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
 
 
 def get_java(download: bool = True) -> Optional[str]:
-    """Return the path to a ``java`` executable.
-
-    Discovery order:
-      1. System Java (PATH / JAVA_HOME)
-      2. Already-extracted JRE at ``~/.cdxml-toolkit/jre/``
-      3. Extract from bundled zip (ships with the package)
-      4. Download from Adoptium API (network fallback)
-
-    Args:
-        download: If True (default), allow network download as last
-                  resort when the bundled zip is also missing.
-
-    Returns:
-        Absolute path to ``java`` or ``java.exe``, or None.
-    """
+    """Return Java from the system, a verified installation, or an approved download."""
     global _java_exe
     if _java_exe is not None:
         return _java_exe
-
-    # 1. System Java
-    _java_exe = _find_system_java()
+    _java_exe = _find_system_java() or _find_extracted_java()
     if _java_exe:
         return _java_exe
-
-    # 2. Already-extracted bundled JRE
-    _java_exe = _find_extracted_java()
-    if _java_exe:
-        return _java_exe
-
-    # 3. Extract from bundled zip
-    _java_exe = _extract_bundled_jre()
-    if _java_exe:
-        return _java_exe
-
-    # 4. Network fallback
+    configured = _configured_archive()
+    if configured:
+        archive, expected = configured
+        try:
+            _java_exe = install_jre_archive(
+                archive,
+                expected_sha256=expected,
+                source="CDXML_TOOLKIT_JRE_ZIP",
+            )
+        except (OSError, ValueError, zipfile.BadZipFile):
+            _java_exe = None
+        if _java_exe:
+            return _java_exe
     if download:
         _java_exe = _download_jre()
-        return _java_exe
-
-    return None
+    return _java_exe
 
 
 def ensure_java_on_path(download: bool = True) -> bool:
-    """Make sure ``java`` is discoverable by subprocess calls.
-
-    Finds (or extracts/downloads) a JRE, then adds its ``bin/``
-    directory to ``PATH`` and sets ``JAVA_HOME`` so that py2opsin's
-    ``subprocess.run(["java", ...])`` works.
-
-    Returns True if Java is available, False otherwise.
-    """
+    """Discover Java and expose its executable directory to subprocesses."""
     java = get_java(download=download)
     if not java:
         return False
-
     java_bin_dir = os.path.dirname(java)
     path = os.environ.get("PATH", "")
-    if java_bin_dir not in path:
+    if java_bin_dir not in path.split(os.pathsep):
         os.environ["PATH"] = java_bin_dir + os.pathsep + path
     os.environ["JAVA_HOME"] = os.path.dirname(java_bin_dir)
     return True

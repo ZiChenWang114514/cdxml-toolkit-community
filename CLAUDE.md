@@ -2,25 +2,32 @@
 
 ## What this is
 
-A chemistry office automation toolkit with 15 MCP tools. Agents use these tools to draw molecules, render reaction schemes, parse ELN exports, analyze LCMS/NMR data, complete lab books, and manipulate ChemDraw files in PowerPoint/Word.
+A chemistry office automation toolkit with 15 compatible core MCP tools and a
+35-tool community profile. Agents use these tools to draw molecules, render
+reaction schemes, parse ELN exports, analyze LCMS/NMR data, complete lab books,
+and manipulate ChemDraw files in PowerPoint/Word.
 
 **All structure output is CDXML** (ChemDraw XML). Uses ACS Document 1996 style.
 
 ## Key rules
 
-1. **Molecules are tool outputs, not strings you write.** Every molecule you work with must come from a tool: `resolve_name`, `modify_molecule`, `parse_reaction`, `extract_structures_from_image`, etc. Never write a SMILES yourself — not from built-in chemistry knowledge, not from reading an image with vision, not by editing a SMILES string. If you need a molecule, call a tool to get it.
-2. **Never edit SMILES directly.** To transform a molecule, use `modify_molecule` — it gives you an MCS diff to verify correctness. If you must provide a hand-edited SMILES (e.g. for a structural change no operation covers), use `modify_molecule(operation="set_smiles")` so the diff confirms what changed. Never construct `{"smiles": "..."}` yourself and pass it to `draw_molecule` or `render_scheme`.
+1. **Ground every molecule.** Connectivity may come from a trusted value supplied by the user or from `resolve_name`, `modify_molecule`, `parse_reaction`, or an OCSR tool. Never invent a SMILES from model knowledge or visual inspection.
+2. **Verify structural edits.** Route intentional changes through `modify_molecule`; inspect its MCS diff before drawing. A trusted SMILES that requires no modification can be passed to `draw_molecule`.
 3. **Never return large output inline.** Tools write files and return `{ok, output_path, size}`. Use `summarize_reaction` to view `parse_reaction` output — do not read the full JSON.
 4. **CDXML is the interchange format.** Binary CDX files must be converted via `convert_cdx_cdxml`.
 
 ## MCP server
 
 ```bash
-python -m cdxml_toolkit.mcp_server                    # stdio (default)
-python -m cdxml_toolkit.mcp_server --transport http    # streamable-http
+python -m cdxml_toolkit.mcp_runtime                              # stdio
+python -m cdxml_toolkit.mcp_runtime --profile office             # smaller profile
+python -m cdxml_toolkit.mcp_runtime --transport streamable-http  # network service
 ```
 
 ## Tool reference
+
+Read `docs/mcp-tools.md` for all generated signatures. The sections below
+describe the compatible core tools.
 
 ### resolve_name
 
@@ -264,10 +271,11 @@ Optional features are selected through the dependency groups documented in
 
 ```
 cdxml_toolkit/
-├── mcp_server/                 # MCP server (15 tools) — primary interface
+├── mcp_server/                 # Compatible 15-tool core server
 │   ├── server.py               # Tool definitions + input normalization
 │   ├── __main__.py
 │   └── __init__.py
+├── mcp_runtime/                # 35-tool hardened community service
 │
 ├── naming/                     # Agent chemistry reasoning
 │   ├── mol_builder.py          # resolve_compound, modify_molecule, draw_molecule

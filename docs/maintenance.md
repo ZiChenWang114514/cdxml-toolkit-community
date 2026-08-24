@@ -36,7 +36,7 @@ sync branch through a pull request. Do not force-push `main`.
 | Capability | Maintained environment |
 | --- | --- |
 | Portable CDXML and RDKit behavior | Windows, Python 3.10-3.13 |
-| MCP server | MCP Python SDK 1.x and 2.x |
+| MCP server | MCP Python SDK 1.x and 2.x; core and community profiles |
 | ChemDraw COM and ChemScript | Licensed Windows workstation |
 | Editable Office objects | Desktop Word and PowerPoint on Windows |
 | DECIMER recognition | Optional `decimer` dependency group and local weights |
@@ -59,7 +59,7 @@ applications explicitly.
 2. Run `python -m pytest -m "not network" -q` on Python 3.10-3.13.
 3. Run applicable native ChemDraw, ChemScript, and Office checks.
 4. Run `python -m build` and `python -m twine check dist/*` in a clean tree.
-5. Confirm the bundled JRE is a real LFS object and review its license and hash.
+5. Confirm wheels and source archives do not contain a bundled JRE.
 6. Create an annotated `vX.Y.Z` tag and a GitHub Release with compatibility notes.
 7. Publish to TestPyPI before any production package index.
 
@@ -70,8 +70,20 @@ and Trusted Publishing is configured with an approved GitHub environment.
 ## Initial maintenance priorities
 
 1. Verify the PyPI `0.5.17` source archive against upstream history.
-2. Move the bundled JRE to a verified optional download after licensing review.
-3. Define stable, experimental, and internal Python APIs.
-4. Add a licensed Windows self-hosted test workflow for native applications.
-5. Integrate the hardened MCP 2.x and worker-process behavior from
-   `codex-chemdraw-skill` through focused, reviewed changes.
+2. Reserve the community distribution on PyPI and configure Trusted Publishing.
+3. Keep the 15 core tool names compatible and review result changes during prereleases.
+4. Run the manually triggered native workflow on an activated, self-hosted Windows runner.
+5. Regenerate MCP Markdown and JSON references whenever the registry changes.
+
+## MCP runtime maintenance
+
+- `cdxml_toolkit.mcp_server` retains the 15 compatible core tools.
+- `cdxml_toolkit.mcp_runtime` owns worker isolation, native resource coordination,
+  artifact validation, HTTP security, metrics, and the complete tool registry.
+- The `codex` profile contains 35 tools. Smaller profiles are tested by exact count.
+- `scripts/sync_skill_runtime.py` exports package-backed compatibility proxies,
+  runtime tests, and generated references into an installed ChemDraw Skill.
+- `docs/mcp-tools.md` and `docs/mcp-schema.json` are generated files. CI rejects drift.
+- The native workflow requires a self-hosted runner carrying the `chemdraw` label,
+  a current GitHub Actions runner, an activated desktop ChemDraw installation,
+  and desktop Word and PowerPoint.

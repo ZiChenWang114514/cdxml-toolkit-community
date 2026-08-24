@@ -37,8 +37,15 @@ jobs:
       - name: Verify package metadata
         shell: pwsh
         run: |
-          python -c "import cdxml_toolkit; assert cdxml_toolkit.__version__ == '0.6.0a1'"
-          python -c "import importlib.metadata as m; assert m.version('cdxml-toolkit-community') == '0.6.0a1'"
+          python -c "import cdxml_toolkit; assert cdxml_toolkit.__version__ == '0.7.0a1'"
+          python -c "import importlib.metadata as m; assert m.version('cdxml-toolkit-community') == '0.7.0a1'"
+
+      - name: Verify generated MCP reference
+        if: matrix.python-version == '3.12'
+        shell: pwsh
+        run: |
+          python -m cdxml_toolkit.mcp_runtime.generate_reference --markdown docs/mcp-tools.md --json docs/mcp-schema.json
+          git diff --exit-code -- docs/mcp-tools.md docs/mcp-schema.json
 
       - name: Run portable tests
         run: python -m pytest -m "not network" -q
@@ -48,10 +55,8 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      - name: Check out repository with LFS assets
+      - name: Check out repository
         uses: actions/checkout@v7
-        with:
-          lfs: true
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -62,8 +67,6 @@ jobs:
         shell: pwsh
         run: |
           python -m pip install --upgrade build twine
-          $jre = Get-Item .\cdxml_toolkit\_jre\temurin-21-jre-win-x64.zip
-          if ($jre.Length -lt 40MB) { throw "Bundled JRE is an unresolved LFS pointer." }
           python -m build
           python -m twine check .\dist\*
 
@@ -95,4 +98,9 @@ jobs:
           python -m pip install "${{ matrix.mcp-spec }}"
 
       - name: Run MCP compatibility tests
-        run: python -m pytest tests/test_mcp_compat.py -q
+        run: >-
+          python -m pytest
+          tests/test_mcp_compat.py
+          tests/runtime/test_mcp_compat.py
+          tests/runtime/test_mcp_stdio.py
+          -q

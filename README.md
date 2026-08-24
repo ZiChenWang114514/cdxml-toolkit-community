@@ -11,7 +11,10 @@ import remains `cdxml_toolkit`.
 
 Chemistry office automation toolkit with MCP (Model Context Protocol) server. Lets LLM agents draw reaction schemes, parse ELN exports, analyze LCMS data, and produce publication-ready ChemDraw (CDXML) output.
 
-The goal: any chemist with a consumer GPU can run a local LLM agent that helps with routine chemistry office tasks. The toolkit provides 15 grounded, validated chemistry tools that LLMs call via MCP — the agent reasons about chemistry while the tools handle SMILES resolution, 2D coordinate generation, and CDXML layout.
+The community runtime exposes 15 compatible core tools plus 20 hardened and
+extended tools for layout, Office, analysis, ChemScript, remote recognition,
+diagnostics, and capability discovery. Tool execution is isolated in bounded
+worker processes; native ChemDraw calls share a serialized resource queue.
 
 > Original project statement: Built and tested with Claude Code (Opus 4.6).
 > The original design and implementation were directed by Hiu Fung Kevin Lee,
@@ -23,7 +26,9 @@ The goal: any chemist with a consumer GPU can run a local LLM agent that helps w
 
 ## Installation
 
-**Prerequisites:** Windows with ChemDraw (ChemOffice 2015+) installed. Python 3.10–3.13 (3.14 is not yet supported by TensorFlow/DECIMER).
+**Prerequisites:** 64-bit Python 3.10–3.13. Native rendering, ChemScript, and
+editable Office objects additionally require Windows and an activated desktop
+ChemDraw installation. Python 3.14 is not yet supported.
 
 ```bash
 # 1. Create a conda environment and clone the community project
@@ -32,23 +37,45 @@ conda activate cdxml
 git clone https://github.com/ZiChenWang114514/cdxml-toolkit-community.git
 cd cdxml-toolkit-community
 
-# Core toolkit and MCP server
-pip install -e .
+# Remove the legacy distribution if it was installed previously. Both
+# distributions provide the same cdxml_toolkit Python import directory.
+pip uninstall -y cdxml-toolkit
 
-# Complete optional feature set
+# Complete community runtime
 pip install -e ".[all]"
 
 # 2. Run the doctor to check your setup
 cdxml-doctor --no-tests
 ```
 
-The core installation includes CDXML utilities, RDKit, rendering, and the MCP
-server. Optional dependency groups are `windows`, `office`, `chemscript`,
-`analysis`, `image`, `decimer`, `opsin`, `all`, and `dev`.
+The core installation includes CDXML utilities, RDKit, and MCP. Optional groups
+are `windows`, `office`, `chemscript`, `analysis`, `image`, `decimer`, `opsin`,
+`http`, `all`, and `dev`.
 
-On first run, `cdxml-doctor` will extract the bundled JRE for OPSIN (~45 MB, one-time) and download DECIMER neural models (~570 MB). Subsequent runs are fast.
+`cdxml-doctor --no-tests` is read-only. Use `cdxml-doctor --json` for a
+machine-readable capability report. It never configures ChemScript unless
+`--configure-chemscript` is supplied.
 
-If ChemScript is not configured, `cdxml-doctor` will detect your ChemDraw installation, show what it found, and offer to set everything up automatically:
+The wheel does not contain a JRE. OPSIN first uses `JAVA_HOME` or `java` on
+`PATH`. When Java is absent it can download Temurin from Adoptium, or install a
+pre-approved local archive:
+
+```powershell
+$env:CDXML_TOOLKIT_JRE_ZIP = "C:\installers\temurin-jre.zip"
+$env:CDXML_TOOLKIT_JRE_SHA256 = "approved sha256"
+cdxml-doctor --no-tests
+```
+
+JRE installation verifies SHA-256 when supplied, limits archive and extracted
+sizes, rejects unsafe ZIP paths, and records an installation manifest.
+
+To configure ChemScript explicitly, run:
+
+```powershell
+cdxml-doctor --no-tests --configure-chemscript
+```
+
+The command detects the ChemDraw installation and presents the planned setup:
 
 ```
 === ChemScript setup ===
@@ -73,7 +100,7 @@ If ChemScript is not configured, `cdxml-doctor` will detect your ChemDraw instal
   ChemScript configured. Run cdxml-doctor again to verify.
 ```
 
-Run `cdxml-doctor --no-tests` again to confirm ChemScript shows OK.
+Run `cdxml-doctor --json` afterward to confirm ChemScript status.
 
 ChemScript is optional — without it, OPSIN handles IUPAC name resolution as an offline fallback. ChemScript adds bidirectional name-to-structure conversion and aligned naming.
 
@@ -104,7 +131,7 @@ Add an `"mcpServers"` key at the top level, next to `"preferences"` (change `YOU
   "mcpServers": {
     "cdxml-toolkit": {
       "command": "C:\\Users\\YOUR_USERNAME\\miniconda3\\envs\\cdxml\\python.exe",
-      "args": ["-m", "cdxml_toolkit.mcp_server"]
+      "args": ["-m", "cdxml_toolkit.mcp_runtime", "--profile", "codex"]
     }
   },
   "preferences": {
@@ -133,7 +160,25 @@ Copy `CLAUDE.md` from the repository root into your agent's working directory. T
 
 For Claude Code, name it `CLAUDE.md`. For other agents, use `agents.md` or whatever your framework reads as system instructions.
 
-## MCP tools (15)
+## MCP tools
+
+The default `codex` profile contains 35 tools. Smaller profiles reduce tool
+selection noise while preserving the 15 compatible core tools and
+`get_toolkit_capabilities`:
+
+| Profile | Tools | Additional focus |
+|---------|------:|------------------|
+| `core` | 16 | Core tools plus capability discovery |
+| `office` | 21 | Office inspection, replacement, templates, and batch embedding |
+| `analysis` | 20 | Experiment discovery, LCMS series, lab books, and SciFinder RDF |
+| `chemscript` | 20 | Molecule comparison and controlled ChemScript SDK access |
+| `codex` | 35 | Complete local and remote tool collection |
+
+The exact generated signatures are in [docs/mcp-tools.md](docs/mcp-tools.md),
+with a machine-readable counterpart in
+[docs/mcp-schema.json](docs/mcp-schema.json).
+
+### Compatible core tools (15)
 
 ### Chemistry resolution
 | Tool | Description |
@@ -182,7 +227,26 @@ For Claude Code, name it `CLAUDE.md`. For other agents, use `agents.md` or whate
 
 **Actionable errors.** Every error tells the agent what to do instead: "Did you mean: BOC_deprotection?", not "KeyError".
 
-**Progressive discovery.** Call any tool with no arguments to get usage examples and schema reference.
+**Progressive discovery.** Start with `get_toolkit_capabilities`, then expose a
+smaller profile when the complete collection is unnecessary. Exact signatures
+come from the live registry and are checked in CI.
+
+## Streamable HTTP
+
+Stdio remains the default. To make an activated Windows workstation available
+to another trusted computer, install the `http` extra and provide an API key:
+
+```powershell
+$env:CHEMDRAW_MCP_HTTP_API_KEY = "generate-a-long-random-value"
+cdxml-mcp --transport streamable-http --host 0.0.0.0 --port 8029 `
+  --allowed-host chemdraw-host.example:8029 `
+  --allowed-origin https://trusted-client.example
+```
+
+Remote binding is refused without an API key and explicit allowed hosts.
+`/health` contains no molecule data. `/metrics` records counts, duration,
+timeouts, worker failures, and ChemDraw queue length without recording tool
+arguments or molecular content.
 
 ## CLI tools
 
@@ -190,7 +254,9 @@ All tools are also available as command-line scripts:
 
 | Command | Description |
 |---------|-------------|
-| `cdxml-mcp` | MCP server (primary interface) |
+| `cdxml-mcp` | Complete hardened MCP runtime (35 tools by default) |
+| `cdxml-mcp-core` | Compatible 15-tool core server |
+| `cdxml-mcp-docs` | Regenerate MCP Markdown and JSON references |
 | `cdxml-parse` | Parse reaction files to JSON |
 | `cdxml-render` | Render JSON/YAML/compact text to CDXML |
 | `cdxml-convert` | CDX/CDXML bidirectional conversion |
