@@ -1,6 +1,9 @@
-<p align="center">
-  <img src="./assets/readme/hero.webp" width="100%" alt="cdxml-toolkit-community with a ChemDraw-native Buchwald-Hartwig coupling that produces KL-CC-001">
-</p>
+![cdxml-toolkit-community with a ChemDraw-native Buchwald-Hartwig coupling that produces KL-CC-001](./assets/readme/hero.webp)
+
+> **Platform support:** Portable CDXML and RDKit workflows run on Windows, macOS,
+> and Linux. ChemDraw COM rendering, ChemScript, and editable ChemDraw objects in
+> Word or PowerPoint require a Windows host with a licensed desktop ChemDraw
+> installation.
 
 <p align="center">
   <a href="https://github.com/ZiChenWang114514/cdxml-toolkit-community/actions/workflows/validate.yml"><img alt="Validate status" src="https://github.com/ZiChenWang114514/cdxml-toolkit-community/actions/workflows/validate.yml/badge.svg"></a>
