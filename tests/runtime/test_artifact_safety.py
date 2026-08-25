@@ -7,6 +7,7 @@ import types
 import unittest
 from unittest import mock
 
+from cdxml_toolkit.office import ole_extractor
 from cdxml_toolkit.mcp_runtime import artifact_safety
 from cdxml_toolkit.mcp_runtime import official_overrides
 MINIMAL_CDXML = "<CDXML><page id=\"1\"/></CDXML>\n"
@@ -278,10 +279,7 @@ class OfficialArtifactAdapterTests(unittest.TestCase):
                 ),
             ]
 
-        with mock.patch(
-            "cdxml_toolkit.office.ole_extractor.extract_from_office",
-            side_effect=extract,
-        ):
+        with mock.patch.object(ole_extractor, "extract_from_office", side_effect=extract):
             result = official_overrides.extract_cdxml_from_office(
                 str(office), output_dir=str(destination)
             )

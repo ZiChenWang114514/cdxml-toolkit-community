@@ -27,6 +27,8 @@ def test_skill_export_uses_package_proxies_and_copies_generated_references(tmp_p
     assert 'import_module("cdxml_toolkit.mcp_runtime.mcp_server")' in server
     assert "def build_registry" not in server
     assert "from cdxml_toolkit.mcp_runtime import mcp_server" in http_test
+    assert (skill_root / "scripts" / "test_capabilities.py").is_file()
+    assert (skill_root / "scripts" / "test_codex_config.py").is_file()
     assert (skill_root / "references" / "mcp-signatures.md").read_bytes() == (
         REPO_ROOT / "docs" / "mcp-tools.md"
     ).read_bytes()
@@ -53,3 +55,34 @@ def test_exported_mcp_launcher_retains_command_line_interface(tmp_path):
 
     assert result.returncode == 0
     assert "--profile" in result.stdout
+
+
+def test_check_mode_detects_drift_and_accepts_current_export(tmp_path):
+    skill_root = tmp_path / "chemdraw"
+    subprocess.run(
+        [sys.executable, str(SCRIPT), str(skill_root)],
+        cwd=REPO_ROOT,
+        check=True,
+    )
+
+    current = subprocess.run(
+        [sys.executable, str(SCRIPT), str(skill_root), "--check"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert current.returncode == 0
+    assert "is current" in current.stdout
+
+    (skill_root / "scripts" / "test_http_transport.py").write_text(
+        "stale\n", encoding="utf-8"
+    )
+    stale = subprocess.run(
+        [sys.executable, str(SCRIPT), str(skill_root), "--check"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+    )
+    assert stale.returncode == 1
+    assert "stale:" in stale.stderr
+    assert "test_http_transport.py" in stale.stderr

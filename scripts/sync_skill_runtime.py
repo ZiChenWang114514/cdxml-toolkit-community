@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 import shutil
+import sys
 
 
 RUNTIME_MODULES = {
@@ -36,7 +37,9 @@ RUNTIME_MODULES = {
 RUNTIME_TESTS = {
     "test_artifact_safety.py",
     "test_chemistry_compare.py",
+    "test_capabilities.py",
     "test_chemscript_sdk.py",
+    "test_codex_config.py",
     "test_decimer_api.py",
     "test_extended_tools.py",
     "test_generate_reference.py",
@@ -51,6 +54,12 @@ RUNTIME_TESTS = {
     "test_runtime_diagnostics.py",
     "test_structure_fidelity.py",
     "test_worker_runtime.py",
+}
+
+
+REFERENCE_EXPORTS = {
+    "mcp-signatures.md": Path("docs/mcp-tools.md"),
+    "mcp-schema.json": Path("docs/mcp-schema.json"),
 }
 
 
@@ -89,11 +98,44 @@ def export_skill(repo_root: Path, skill_root: Path) -> None:
     for filename in sorted(RUNTIME_TESTS):
         shutil.copyfile(runtime_tests / filename, scripts / filename)
 
-    shutil.copyfile(repo_root / "docs" / "mcp-tools.md", references / "mcp-signatures.md")
-    shutil.copyfile(repo_root / "docs" / "mcp-schema.json", references / "mcp-schema.json")
+    for skill_name, source_relative in REFERENCE_EXPORTS.items():
+        shutil.copyfile(repo_root / source_relative, references / skill_name)
 
 
-def main() -> None:
+def check_skill(repo_root: Path, skill_root: Path) -> list[str]:
+    """Return missing or stale files managed by this exporter."""
+    problems: list[str] = []
+    scripts = skill_root / "scripts"
+    references = skill_root / "references"
+
+    for skill_name, package_name in sorted(RUNTIME_MODULES.items()):
+        target = scripts / f"{skill_name}.py"
+        expected = _wrapper_source(package_name)
+        if not target.is_file():
+            problems.append(f"missing: {target}")
+        elif target.read_text(encoding="utf-8") != expected:
+            problems.append(f"stale: {target}")
+
+    runtime_tests = repo_root / "tests" / "runtime"
+    for filename in sorted(RUNTIME_TESTS):
+        source = runtime_tests / filename
+        target = scripts / filename
+        if not target.is_file():
+            problems.append(f"missing: {target}")
+        elif target.read_bytes() != source.read_bytes():
+            problems.append(f"stale: {target}")
+
+    for skill_name, source_relative in REFERENCE_EXPORTS.items():
+        source = repo_root / source_relative
+        target = references / skill_name
+        if not target.is_file():
+            problems.append(f"missing: {target}")
+        elif target.read_bytes() != source.read_bytes():
+            problems.append(f"stale: {target}")
+    return problems
+
+
+def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("skill_root", type=Path)
     parser.add_argument(
@@ -101,9 +143,24 @@ def main() -> None:
         type=Path,
         default=Path(__file__).resolve().parents[1],
     )
+    parser.add_argument(
+        "--check",
+        action="store_true",
+        help="report missing or stale managed Skill files without changing them",
+    )
     args = parser.parse_args()
-    export_skill(args.repo_root.resolve(), args.skill_root.resolve())
+    repo_root = args.repo_root.resolve()
+    skill_root = args.skill_root.resolve()
+    if args.check:
+        problems = check_skill(repo_root, skill_root)
+        if problems:
+            print("\n".join(problems), file=sys.stderr)
+            return 1
+        print(f"Skill runtime export is current: {skill_root}")
+        return 0
+    export_skill(repo_root, skill_root)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())
