@@ -9,7 +9,7 @@
   <a href="https://github.com/ZiChenWang114514/cdxml-toolkit-community/actions/workflows/validate.yml"><img alt="Validate status" src="https://github.com/ZiChenWang114514/cdxml-toolkit-community/actions/workflows/validate.yml/badge.svg"></a>
   <a href="https://github.com/ZiChenWang114514/cdxml-toolkit-community/releases/tag/v0.7.0a1"><img alt="Release 0.7.0 alpha 1" src="https://img.shields.io/badge/release-0.7.0a1-c53f4e"></a>
   <a href="https://www.python.org/"><img alt="Python 3.10 through 3.13" src="https://img.shields.io/badge/Python-3.10--3.13-3776AB"></a>
-  <a href="./docs/mcp-tools.md"><img alt="35 MCP tools" src="https://img.shields.io/badge/MCP_tools-35-157d7f"></a>
+  <a href="./docs/mcp-tools.md"><img alt="38 MCP tools" src="https://img.shields.io/badge/MCP_tools-38-157d7f"></a>
   <a href="./LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/License-MIT-2f855a"></a>
 </p>
 
@@ -19,6 +19,7 @@
 </p>
 
 <p align="center">
+  <a href="#publication-figures">Publication figures</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#connect-an-agent">Connect an agent</a> ·
   <a href="#tool-profiles">Tool profiles</a> ·
@@ -36,6 +37,24 @@ The repository produces native chemistry artifacts, not screenshot-only output. 
 [Editable CDXML](./samples/consolidated/two-step-scheme.cdxml) ·
 [Native PNG](./samples/consolidated/two-step-scheme.png) ·
 [More scheme examples](./experiments/scheme_dsl/showcase/INDEX.md)
+
+## Publication figures
+
+Create editable figures with explicit atom coordinates, six reaction-arrow styles, electron arrows, rich conditions, atom numbering and native-template preservation. This native ChemDraw output exercises multi-reactant layout and stereochemical depiction:
+
+![Native ChemDraw depiction test with two reactants, a reaction arrow and retained S stereochemistry](./samples/publication-figures/stereo-reaction.png)
+
+[Editable CDXML](./samples/publication-figures/stereo-reaction.cdxml) · [Drawing and review guide](https://github.com/ZiChenWang114514/codex-chemdraw-skill/blob/main/skill/chemdraw/references/image-visual-review.md)
+
+| New tool | Use it for |
+| --- | --- |
+| `compose_chemical_figure` | Fixed-coordinate structures, arrows, rich text, grids, highlights and native templates |
+| `rdkit_workbench` | Inspect atom indices and CIP labels; explicit stereo edits, bounded stereoisomer/tautomer enumeration, MCS and R-group decomposition |
+| `compare_figure_images` | Save side-by-side images and difference measurements for actual visual review |
+
+The renderer checks chemical identity by reading back final CDXML coordinates. Wavy bonds remain unspecified; enhanced AND/OR/ABS stereo groups are retained. Chemistry checks and visual similarity are separate: neither a valid SMILES nor a low image-difference score proves a faithful paper reproduction. Unsupported fresh radical and non-tetrahedral depictions require a verified native template.
+
+**Version scope:** these features are on `main` after the `v0.7.0a1` release tag. Use the source installation below; the existing release tag has not been moved.
 
 ## What it provides
 
@@ -98,7 +117,7 @@ Archive size, extracted size, paths, links, and optional SHA-256 are checked bef
 
 ## Connect an agent
 
-The `codex` profile exposes all 35 tools. Start a local stdio server directly:
+The `codex` profile exposes all 38 tools. Start a local stdio server directly:
 
 ```powershell
 cdxml-mcp --profile codex
@@ -165,7 +184,7 @@ Choose the smallest useful profile to reduce tool-selection noise:
 | `office` | 21 | Office inspection, replacement, templates, and batch embedding |
 | `analysis` | 20 | Experiment discovery, LCMS series, lab books, and SciFinder RDF |
 | `chemscript` | 20 | Molecule comparison and controlled ChemScript SDK access |
-| `codex` | 35 | Complete local and remote collection |
+| `codex` | 38 | Complete local and remote collection |
 
 The generated [MCP tool reference](./docs/mcp-tools.md) and [JSON schema](./docs/mcp-schema.json) contain the exact live signatures. CI checks both files for drift.
 
@@ -188,7 +207,7 @@ DECIMER image upload is disabled by default. Remote recognition requires `confir
 
 | Command | Purpose |
 | --- | --- |
-| `cdxml-mcp` | Complete MCP runtime; 35-tool `codex` profile by default |
+| `cdxml-mcp` | Complete MCP runtime; 38-tool `codex` profile by default |
 | `cdxml-mcp-core` | Compatible 15-tool core server |
 | `cdxml-doctor` | Read-only diagnostics, tests, and explicit ChemScript setup |
 | `cdxml-render` | Render JSON, YAML, or compact text to CDXML |
