@@ -386,7 +386,7 @@ def _render_cdxml(source: str, destination: str, dpi: int = 300) -> str:
     )
 
 
-def _staged_cdxml_outputs(destination: Path, render_preview: bool, writer) -> dict[str, str]:
+def _staged_cdxml_outputs(destination: Path, render_preview: bool, writer, semantic_source=None) -> dict[str, str]:
     preview = destination.with_name(f"{destination.stem}_preview.png")
     if render_preview and preview.exists():
         raise ValueError(f"Refusing to overwrite an existing preview: {preview}")
@@ -395,6 +395,11 @@ def _staged_cdxml_outputs(destination: Path, render_preview: bool, writer) -> di
         temporary_cdxml = stage / destination.name
         writer(temporary_cdxml)
         _assert_output(temporary_cdxml)
+        if semantic_source is not None:
+            from ..layout.label_anchors import preserve_label_anchors
+            preserve_label_anchors(semantic_source, temporary_cdxml)
+            from ..chemistry_semantics import validate_document_preserved
+            validate_document_preserved(semantic_source, temporary_cdxml)
         staged = [(temporary_cdxml, destination)]
         outputs = {"cdxml": str(destination)}
         if render_preview:
@@ -477,6 +482,7 @@ def clean_scheme_layout(
         destination,
         render_preview,
         lambda temporary: _run_cleanup(str(source), str(temporary), approach),
+        semantic_source=source,
     )
     return _contract(outputs, metadata={"approach": approach})
 
@@ -589,7 +595,7 @@ def polish_reaction_scheme(
             ref_cdxml=reference, verbose=False,
         )
 
-    outputs = _staged_cdxml_outputs(destination, render_preview, write_polished)
+    outputs = _staged_cdxml_outputs(destination, render_preview, write_polished, semantic_source=source)
     return _contract(outputs, metadata={"approach": approach, "align_mode": align_mode})
 
 

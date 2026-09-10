@@ -17,6 +17,7 @@ from .capabilities import SYSTEM_TOOLS
 from .extended_tools import PUBLIC_TOOLS
 from .official_overrides import OFFICIAL_OVERRIDES
 from .remote_tools import REMOTE_TOOLS
+from .figure_tools import FIGURE_TOOLS
 
 
 @dataclass(frozen=True)
@@ -139,6 +140,9 @@ def build_registry(profile: str | None = None) -> dict[str, ToolSpec]:
     )
     extended_functions = _merge_named_tools(
         extended_functions, SYSTEM_TOOLS, source="system tools"
+    )
+    extended_functions = _merge_named_tools(
+        extended_functions, FIGURE_TOOLS, source="figure and RDKit tools"
     )
     extended = {
         name: ToolSpec(

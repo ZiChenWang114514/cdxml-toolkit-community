@@ -322,9 +322,14 @@ ELEMENT_NUMBERS = {
 # Bond stereo
 BOND_STEREO_ATTR = {
     1: "WedgeBegin",
-    4: "WedgeBegin",
+    4: "Wavy",
     6: "WedgedHashBegin",
 }
+
+
+from contextvars import ContextVar
+
+_fragment_receipts = ContextVar('fragment_receipts', default=None)
 
 
 def _build_fragment(
@@ -359,7 +364,7 @@ def _build_fragment(
         z = ids.next()
 
         sym = a.get("symbol", "C")
-        elem_num = ELEMENT_NUMBERS.get(sym, 6)
+        elem_num = a.get('atomic_number', ELEMENT_NUMBERS.get(sym, 6))
         nh = a.get("num_hydrogens")
         charge = a.get("charge", 0)
         isotope = a.get("isotope")
@@ -380,6 +385,10 @@ def _build_fragment(
             attrs.append('NeedsClean="yes"')
             if charge:
                 attrs.append(f'Charge="{charge}"')
+
+        if a.get('enhanced_stereo_type'):
+            attrs.append(f'EnhancedStereoType="{a["enhanced_stereo_type"]}"')
+            attrs.append(f'EnhancedStereoGroupNum="{a["enhanced_stereo_group"]}"')
 
         if is_carbon:
             lines.append(f'<n {" ".join(attrs)}/>')
@@ -445,7 +454,15 @@ def _build_fragment(
         lines.append(f'<b {" ".join(attrs)}/>')
 
     lines.append('</fragment>')
-    return "\n".join(lines), atom_id_map, frag_id
+    fragment_xml = "\n".join(lines)
+    source_cx = atoms[0].get('_source_cxsmiles') if atoms else None
+    if source_cx:
+        from ..chemistry_semantics import validate_fragment
+        receipt = validate_fragment(source_cx, fragment_xml)
+        collector = _fragment_receipts.get()
+        if collector is not None:
+            collector.append({'fragment_id': frag_id, **receipt})
+    return fragment_xml, atom_id_map, frag_id
 
 
 # ---------------------------------------------------------------------------
@@ -586,9 +603,7 @@ def _build_arrow(
         f'ArrowheadWidth="250"',
         f'Head3D="{head_x:.2f} {head_y:.2f} 0"',
         f'Tail3D="{tail_x:.2f} {tail_y:.2f} 0"',
-        f'Center3D="{cx3:.2f} {cy3:.2f} 0"',
-        f'MajorAxisEnd3D="{cx3 + 80:.2f} {cy3:.2f} 0"',
-        f'MinorAxisEnd3D="{cx3:.2f} {cy3 + 80:.2f} 0"',
+        f'LineWidth="{ACS_LINE_WIDTH}"',
     ]
 
     if dashed:
@@ -1851,6 +1866,10 @@ def _layout_steps_row(
 
         if not skip_substrate:
             for i, sub in enumerate(rs.substrates):
+                if i:
+                    plus_x = cursor_x + inter_gap / 2 if is_rtl else cursor_x - inter_gap / 2
+                    plus_xml, _ = _build_text_element(['+'], plus_x, arrow_y + 3.5, ids)
+                    xml_parts.append(plus_xml)
                 bbox = sub.bbox
                 w = _bbox_width(bbox)
                 # Shift to position
@@ -1937,14 +1956,15 @@ def _layout_steps_row(
             for af in rs.above_structures:
                 af_w = _bbox_width(af.bbox)
                 af_h = _bbox_height(af.bbox)
+                label_height = 20.0 if af.ref.label else 0.0
                 # Position above the arrow, with extra room for text below structure
                 target_cx = above_cursor_x + af_w / 2.0
                 if rs.above_text:
                     # text sits LAYOUT_BELOW_GAP above arrow; struct sits above text
-                    target_cy = arrow_y - LAYOUT_BELOW_GAP - above_text_height - af_h / 2.0
+                    target_cy = arrow_y - LAYOUT_BELOW_GAP - above_text_height - label_height - af_h / 2.0
                 else:
                     # no text: struct sits LAYOUT_ABOVE_GAP above arrow
-                    target_cy = arrow_y - LAYOUT_ABOVE_GAP - af_h / 2.0
+                    target_cy = arrow_y - LAYOUT_ABOVE_GAP - label_height - af_h / 2.0
                 dx = target_cx - af.cx
                 dy = target_cy - af.cy
                 _shift_atoms(af.atoms, dx, dy)
@@ -2053,6 +2073,10 @@ def _layout_steps_row(
 
         # -- Products --
         for i, prod in enumerate(rs.products):
+            if i:
+                plus_x = cursor_x + inter_gap / 2 if is_rtl else cursor_x - inter_gap / 2
+                plus_xml, _ = _build_text_element(['+'], plus_x, arrow_y + 3.5, ids)
+                xml_parts.append(plus_xml)
             bbox = prod.bbox
             w = _bbox_width(bbox)
             if is_rtl:
@@ -2302,7 +2326,7 @@ def _identify_product_mol(
         )
 
 
-def render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str:
+def _render_impl(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str:
     """
     Render a SchemeDescriptor to a CDXML document string.
 
@@ -2374,6 +2398,28 @@ def render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str:
         CDXML_FOOTER,
     ]
     return "\n".join(doc_parts)
+
+
+class _ValidatedCDXML(str):
+    pass
+
+
+def render(scheme: SchemeDescriptor, yaml_dir: Optional[str] = None) -> str:
+    """Render a scheme and retain per-fragment output-derived validation receipts."""
+    receipts = []
+    token = _fragment_receipts.set(receipts)
+    try:
+        result = _ValidatedCDXML(_render_impl(scheme, yaml_dir))
+        from xml.etree import ElementTree as ET
+        root = ET.fromstring(result)
+        fragment_ids = {node.get('id') for node in root.iter('fragment')}
+        validated_ids = {str(receipt['fragment_id']) for receipt in receipts}
+        result.chemistry_validation = {
+            'status': 'preserved' if fragment_ids and fragment_ids == validated_ids else 'unverified',
+            'method': 'final_coordinate_fragment_roundtrips', 'fragments': receipts}
+        return result
+    finally:
+        _fragment_receipts.reset(token)
 
 
 def render_to_file(

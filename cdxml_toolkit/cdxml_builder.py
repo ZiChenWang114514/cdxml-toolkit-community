@@ -100,7 +100,7 @@ BOND_ORDER_ATTR: Dict[int, Optional[str]] = {
 # Stereo bond config → ChemDraw BS / Display attribute
 BOND_STEREO_ATTR: Dict[int, str] = {
     1: "WedgeBegin",   # solid wedge up
-    4: "WedgeBegin",   # either / unknown (use same, ChemDraw re-interprets)
+    4: "Wavy",   # unspecified configuration must not become a solid wedge
     6: "WedgedHashBegin",  # dashed wedge
 }
 
@@ -391,6 +391,11 @@ def _build_fragment(
 
         if charge:
             attrs.append(f'Charge="{charge}"')
+        if a.get('isotope'):
+            attrs.append(f'Isotope="{a["isotope"]}"')
+        if a.get('enhanced_stereo_type'):
+            attrs.append(f'EnhancedStereoType="{a["enhanced_stereo_type"]}"')
+            attrs.append(f'EnhancedStereoGroupNum="{a["enhanced_stereo_group"]}"')
 
         # Stereo cfg (atom)
         cfg = a.get("cfg", 0)
@@ -464,7 +469,12 @@ def _build_fragment(
         lines.append(f'<b {" ".join(attrs)}/>')
 
     lines.append("</fragment>")
-    return "\n".join(lines), atom_id_map, frag_id
+    fragment_xml = "\n".join(lines)
+    source_cx = atoms[0].get('_source_cxsmiles') if atoms else None
+    if source_cx:
+        from .chemistry_semantics import validate_fragment
+        validate_fragment(source_cx, fragment_xml)
+    return fragment_xml, atom_id_map, frag_id
 
 
 # ---------------------------------------------------------------------------

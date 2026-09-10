@@ -236,26 +236,35 @@ def repair_and_validate_drawn_cdxml(
     fragment = _first_fragment(document)
     nodes = _elements(fragment, "n")
     bonds = _elements(fragment, "b")
-    mapped_bonds = _validate_graph(molecule, nodes, bonds)
-
-    expected_displays = _expected_wedge_displays(molecule, nodes, mapped_bonds)
-    if repair_stereo:
-        for bond_index, display in expected_displays.items():
-            mapped_bonds[bond_index].setAttribute("Display", display)
+    from ..chemistry_semantics import validate_fragment, read_molecules
+    # Validation is output-derived and accepts equivalent atom ordering and wedges.
+    # Repair is only for missing wedges in a graph whose source order is known.
+    if (repair_stereo and any(a.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED for a in molecule.GetAtoms())
+            and not any(b.getAttribute("Display") for b in bonds)):
+        mapped_bonds = _validate_graph(molecule, nodes, bonds)
+        conf = molecule.GetConformer()
+        for i, node in enumerate(nodes):
+            x, y = _point(node)
+            conf.SetAtomPosition(i, (x, -y, 0.0))
+        for bond in molecule.GetBonds():
+            bond.SetBondDir(Chem.BondDir.NONE)
+        Chem.WedgeMolBonds(molecule, conf)
+        for index, display in _expected_wedge_displays(molecule, nodes, mapped_bonds).items():
+            mapped_bonds[index].setAttribute("Display", display)
         output.write_bytes(document.toxml(encoding="UTF-8"))
-    wedge_count = _validate_wedges(mapped_bonds, expected_displays)
-
-    stereo_double_bonds = _validate_double_bond_geometry(molecule, nodes)
-    specified_centers = sum(
-        atom.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED
-        for atom in molecule.GetAtoms()
-    )
+    try:
+        validation = validate_fragment(smiles, fragment.toxml())
+    except ValueError as exc:
+        raise StructureFidelityError("stereochemistry_not_preserved", str(exc)) from exc
+    actual = read_molecules(Path(output))[0]
+    wedge_count = sum(b.getAttribute("Display") in
+        ("WedgeBegin", "WedgeEnd", "WedgedHashBegin", "WedgedHashEnd") for b in bonds)
     return {
-        "status": "preserved",
-        "canonical_isomeric_smiles": Chem.MolToSmiles(molecule, isomericSmiles=True),
-        "specified_chiral_centers": specified_centers,
-        "stereo_double_bonds": stereo_double_bonds,
-        "isotope_atoms": sum(bool(atom.GetIsotope()) for atom in molecule.GetAtoms()),
-        "charged_atoms": sum(bool(atom.GetFormalCharge()) for atom in molecule.GetAtoms()),
+        **validation,
+        "canonical_isomeric_smiles": Chem.MolToSmiles(actual, isomericSmiles=True),
+        "specified_chiral_centers": sum(a.GetChiralTag() != Chem.ChiralType.CHI_UNSPECIFIED for a in actual.GetAtoms()),
+        "stereo_double_bonds": sum(b.GetStereo() in (Chem.BondStereo.STEREOE, Chem.BondStereo.STEREOZ) for b in actual.GetBonds()),
+        "isotope_atoms": sum(bool(a.GetIsotope()) for a in actual.GetAtoms()),
+        "charged_atoms": sum(bool(a.GetFormalCharge()) for a in actual.GetAtoms()),
         "wedge_bonds": wedge_count,
     }

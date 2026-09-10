@@ -421,7 +421,7 @@ def render_scheme(
     layout: str = "auto",
     output_path: Optional[str] = None,
 ) -> str:
-    """Render a chemical reaction scheme to publication-ready CDXML.
+    """Render an editable chemical reaction scheme with per-fragment chemical validation.
 
     Accepts exactly ONE of: yaml_text, compact_text, or json_path.
     Call with NO arguments to see the full YAML schema reference.
@@ -436,9 +436,9 @@ def render_scheme(
     image with vision. Always call the appropriate tool first, then use the
     SMILES from its output in your YAML.
 
-    Convention: ONE substrate on center line per step.  Additional reagents
-    go in above_arrow (structures or text).  This shares intermediates
-    between sequential steps.
+    Place all atom-contributing substrates on the center line when appropriate.
+    Catalysts and conditions may go above/below arrows. Sequential steps can
+    share intermediates; spatial position does not determine chemical identity.
 
     Args:
         yaml_text:    YAML scheme descriptor string.
@@ -482,7 +482,7 @@ def render_scheme(
             "      steps: [{substrates: [A], products: [B], ...}]\n"
             "    - label: \"(ii)\"\n"
             "      steps: [{substrates: [C], products: [D], ...}]\n\n"
-            "Convention: ONE substrate on center line per step. Reagents go in above_arrow.\n"
+            "Multiple substrates/products are supported. Use above_arrow for catalysts or conditions.\n"
             "output_path: optional — write CDXML to file and get {ok, output_path, size} back."
         )
     if modes > 1:
@@ -563,7 +563,10 @@ def render_scheme(
                 ),
             }
 
-    return _write_output(cdxml, output_path, "scheme", ".cdxml")
+    result = _write_output(cdxml, output_path, "scheme", ".cdxml")
+    if getattr(cdxml, 'chemistry_validation', None):
+        result.setdefault('metadata', {})['chemistry_validation'] = cdxml.chemistry_validation
+    return result
 
 
 # ---------------------------------------------------------------------------

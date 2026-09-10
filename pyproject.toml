@@ -28,7 +28,7 @@ classifiers = [
 ]
 dependencies = [
     "lxml>=4.6",
-    "rdkit>=2023.03",
+    "rdkit>=2025.03",
     "Pillow>=9.0",
     "pyyaml>=5.4",
     "mcp>=1.0,<3",

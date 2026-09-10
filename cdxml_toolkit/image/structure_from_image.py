@@ -531,6 +531,18 @@ def _rdkit_mol_to_atom_bond_dicts(
     types (no AROMATIC).  This is required for correct ChemDraw rendering —
     ChemDraw 16 does not recognise Order="1.5" as an aromatic bond.
     """
+    from ..chemistry_semantics import require_supported
+    require_supported(mol)
+    # Chiral tags alone do not set bond directions. Wedge the FINAL coordinates.
+    Chem.WedgeMolBonds(mol, mol.GetConformer())
+    source_cx = Chem.MolToCXSmiles(mol, Chem.SmilesWriteParams(), Chem.CXSmilesFields.CX_ENHANCEDSTEREO)
+    enhanced = {}
+    group_names = {Chem.StereoGroupType.STEREO_AND: 'And',
+                   Chem.StereoGroupType.STEREO_OR: 'Or',
+                   Chem.StereoGroupType.STEREO_ABSOLUTE: 'Absolute'}
+    for group_num, group in enumerate(mol.GetStereoGroups(), 1):
+        for atom in group.GetAtoms():
+            enhanced[atom.GetIdx()] = (group_names[group.GetGroupType()], group_num)
     conf = mol.GetConformer()
     atoms = []
     rdkit_to_local: Dict[int, int] = {}  # rdkit 0-based → output 1-based
@@ -554,6 +566,11 @@ def _rdkit_mol_to_atom_bond_dicts(
         isotope = atom.GetIsotope()
         if isotope:
             a["isotope"] = isotope
+        a['atomic_number'] = atom.GetAtomicNum()
+        if i in enhanced:
+            a['enhanced_stereo_type'], a['enhanced_stereo_group'] = enhanced[i]
+        if i == 0:
+            a['_source_cxsmiles'] = source_cx
         atoms.append(a)
 
     bonds = []
