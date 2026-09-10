@@ -56,6 +56,24 @@ The renderer checks chemical identity by reading back final CDXML coordinates. W
 
 **Version scope:** these features are on `main` after the `v0.7.0a1` release tag. Use the source installation below; the existing release tag has not been moved.
 
+### From a paper screenshot to editable ChemDraw
+
+**A worked reproduction of the supplied synthesis-scheme excerpt.** The agent segmented the figure, used DECIMER API recognition, redrew in ChemDraw, inspected side-by-side comparisons, corrected structures, and assembled visually transcribed conditions.
+
+**Original paper excerpt — supplied by the user**
+
+![Original paper scheme showing compounds 13a, 14, 15, 16 and the shared 17a/17b depiction](assets/readme/paper-replica/original.png)
+
+**Editable reconstruction — ChemDraw-native output**
+
+![Editable ChemDraw reconstruction preserving the original scheme orientation, conditions and compound labels](assets/readme/paper-replica/replica.png)
+
+[Download editable CDXML](assets/readme/paper-replica/replica.cdxml) · [Inspect structure-by-structure comparisons](assets/readme/paper-replica/structure-comparison.png) · [Case provenance](assets/readme/paper-replica/provenance.json)
+
+Review corrected OH/CH₃ and OMe/OH recognition errors, restored X/R abbreviations, and removed an unsupported configuration at a wavy bond. All five corrected structures passed final-CDXML readback in this case; 17a/17b retain the source's shared wavy-bond representation.
+
+**Visually reviewed and editable; not pixel-identical.** Font metrics, arrows and some line geometry still differ. Chemical readback agreement does not establish absolute recognition accuracy.
+
 ## What it provides
 
 | Area | Practical result |
