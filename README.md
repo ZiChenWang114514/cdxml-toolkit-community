@@ -44,7 +44,7 @@ Create editable figures with explicit atom coordinates, six reaction-arrow style
 
 ![Native ChemDraw depiction test with two reactants, a reaction arrow and retained S stereochemistry](./samples/publication-figures/stereo-reaction.png)
 
-[Editable CDXML](./samples/publication-figures/stereo-reaction.cdxml) · [Drawing and review guide](https://github.com/ZiChenWang114514/codex-chemdraw-skill/blob/main/skill/chemdraw/references/image-visual-review.md)
+[Editable CDXML](./samples/publication-figures/stereo-reaction.cdxml) · [Agent Skill: drawing and review guide](https://github.com/ZiChenWang114514/chemdraw-skill/blob/main/skill/chemdraw/references/image-visual-review.md)
 
 | New tool | Use it for |
 | --- | --- |
