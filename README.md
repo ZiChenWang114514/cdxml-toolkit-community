@@ -1,3 +1,5 @@
+[English](README.md) · [简体中文](README.zh-cn.md)
+
 ![CDXML Toolkit: editable molecular structures and reaction schemes](./assets/readme/overview.svg)
 
 > **Platform support:** Portable CDXML and RDKit workflows run on Windows, macOS,
@@ -152,6 +154,27 @@ Explicitly simulated first-order decay demonstrates the numerical-data-to-figure
 
 </details>
 
+## Reconstruction scope and structure review
+
+Both complex synthesis examples contain the complete layout, native molecular structures, text, brackets and electron arrows. Molecules remain editable atoms, bonds and expandable abbreviations; screenshots and traced outlines do not substitute for molecular objects.
+
+| Check | Current result |
+| --- | --- |
+| Connectivity, elements, charge, isotopes and alkene geometry after native saving | Save-cycle checks pass for both figures |
+| Complete stereochemistry | Not accepted; RDKit and ChemScript return opposing assignments at some bridgeheads |
+| Visual comparison with the reference | Native previews and full comparisons inspected; font, arrow and some line geometry still differ |
+| Strict pixel-for-pixel 1:1 | Not achieved |
+
+Save-cycle agreement does not establish perfect recognition of the reference. Compounds 105–109, 115–120 and 121 contain conflicting specified configurations; some expanded chains and abbreviation definitions in the source also need clarification. The reconstructions preserve each depiction rather than silently making the route chemically self-consistent. The [atom-level comparison](examples/paper-reconstructions/stereochemistry-check.json) records component hashes and atom mappings for review; absence of a disagreement does not independently establish source stereochemistry.
+
+After installing the runtime, rebuild these two layouts offline without repeating DECIMER recognition:
+
+```powershell
+python examples/paper-reconstructions/rebuild.py ./paper-figures-output
+```
+
+Use a new output directory. This assembles saved molecular components; native previews still require Windows ChemDraw. See the [rebuild example and limitations](examples/paper-reconstructions/README.md). Source paper artwork is not relicensed under the software license.
+
 ## Publication figures
 
 Create editable figures with explicit atom coordinates, six reaction-arrow styles, electron arrows, rich conditions, atom numbering and native-template preservation.
@@ -173,6 +196,8 @@ The renderer checks chemical identity by extracting structures from the saved CD
 | Chemistry grounding | Resolve names, abbreviations, CAS numbers, formulas, and recognized image candidates through databases, ChemScript, OPSIN, or DECIMER. |
 | Controlled structure work | Compare molecules, apply named transformations, preserve stereochemistry, and inspect MCS-based structural differences. |
 | ChemDraw output | Draw molecules, clean or merge schemes, convert CDX/CDXML, and render native PNG or SVG files. |
+| Laboratory figures | Native TLC objects and Rf measurement; editable apparatus assembled from installed ChemDraw templates. |
+| Scientific data | Peak picking and selected-region integration for processed 1D NMR; editable numerical plots. No automatic atom assignment or complete FID pipeline. |
 | Office workflows | Extract, replace, and batch-embed editable ChemDraw OLE objects in PowerPoint and Word. |
 | Experiment workflows | Parse ELN exports, SciFinder RDF, LCMS or NMR reports, and assemble structured lab-book material. |
 | Agent service | Run through stdio locally or authenticated Streamable HTTP for a trusted remote computer. |
@@ -196,7 +221,7 @@ pip install -e ".[all]"
 cdxml-doctor --no-tests
 ```
 
-The default installation includes the portable CDXML, RDKit, and MCP runtime. Optional groups are `windows`, `office`, `chemscript`, `analysis`, `image`, `decimer`, `opsin`, `http`, `all`, and `dev`.
+The default installation includes the portable CDXML, RDKit, and MCP runtime. Optional groups are `windows`, `office`, `chemscript`, `analysis`, `scientific`, `image`, `decimer`, `opsin`, `http`, `all`, and `dev`.
 
 Install the current community source directly when a checkout is unnecessary:
 
@@ -227,46 +252,32 @@ Archive size, extracted size, paths, links, and optional SHA-256 are checked bef
 
 ## Connect an agent
 
-The `codex` profile exposes all 38 tools. Start a local stdio server directly:
+Any MCP-compatible agent can connect to the runtime. Start the full 38-tool stdio service:
 
 ```powershell
-cdxml-mcp --profile codex
+cdxml-mcp
 ```
 
-For Codex, add the server to `%USERPROFILE%\.codex\config.toml` and replace the Python path with the interpreter from the `cdxml` environment:
-
-```toml
-[mcp_servers.chemdraw]
-command = "C:\\Users\\YOU\\miniconda3\\envs\\cdxml\\python.exe"
-args = ["-m", "cdxml_toolkit.mcp_runtime", "--profile", "codex"]
-startup_timeout_sec = 120
-tool_timeout_sec = 600
-```
-
-Restart the agent, then try:
-
-```text
-Resolve aspirin, draw it as CDXML, and render a PNG preview.
-```
-
-<details>
-<summary><strong>Claude Desktop configuration</strong></summary>
-
-Add the server under `mcpServers` in `%APPDATA%\Claude\claude_desktop_config.json`:
+Register the Python interpreter and arguments in your client's MCP configuration. A common JSON format is:
 
 ```json
 {
   "mcpServers": {
-    "cdxml-toolkit": {
+    "chemdraw": {
       "command": "C:\\Users\\YOU\\miniconda3\\envs\\cdxml\\python.exe",
-      "args": ["-m", "cdxml_toolkit.mcp_runtime", "--profile", "codex"]
+      "args": ["-m", "cdxml_toolkit.mcp_runtime"]
     }
   }
 }
 ```
 
-The same process-based configuration works with other MCP-compatible agents.
-</details>
+Configuration location and syntax depend on the client. Restart the agent, then try:
+
+```text
+Resolve aspirin, draw it as CDXML, and render a PNG preview.
+```
+
+For paper reconstruction and laboratory figures, load the client-independent [ChemDraw Skill](https://github.com/ZiChenWang114514/chemdraw-skill). The historical profile identifier `codex` remains available for compatibility; it does not restrict which agent can use the tools.
 
 Copy [`CLAUDE.md`](./CLAUDE.md) into an agent workspace when the client supports project instructions. It tells the agent to obtain molecular structures from tools, use OCSR for images, preserve chemical semantics, and verify transformations instead of inventing structure strings.
 
