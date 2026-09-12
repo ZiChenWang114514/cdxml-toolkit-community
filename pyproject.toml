@@ -36,6 +36,12 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+scientific = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "nmrglue>=0.10",
+]
 windows = [
     "pywin32>=300; platform_system == 'Windows'",
 ]
@@ -75,6 +81,10 @@ opsin = [
     "starlette>=0.37",
 ]
 all = [
+    "numpy>=1.24",
+    "scipy>=1.10",
+    "matplotlib>=3.7",
+    "nmrglue>=0.10",
     "pywin32>=300; platform_system == 'Windows'",
     "python-pptx>=0.6",
     "python-docx>=0.8",

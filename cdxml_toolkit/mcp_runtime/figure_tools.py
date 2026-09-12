@@ -372,6 +372,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             'text':{'position','text','runs','size','align','color'},
             'arrow':{'start','end','style','color'},'line':{'start','end','style','color'},
             'curve':{'points','color'},'electron_arrow':{'points','color','electrons'},
+            'symbol':{'start','end','symbol','color'},
             'rectangle':{'start','end','color'},'ellipse':{'start','end','color'},'bracket':{'start','end','color','label'}}
         unknown=set(item)-fields.get(kind,set())-{'type','id'}
         if unknown: raise ValueError(f'Unknown {kind} object fields: {sorted(unknown)}')
@@ -520,6 +521,15 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             if kind=='electron_arrow':
                 node.set('ArrowheadHead','HalfLeft' if item.get('electrons',2)==1 else 'Full')
                 node.set('ArrowheadType','Solid')
+            remember(item,node)
+        elif kind=='symbol':
+            symbol=item['symbol']
+            if symbol not in ('LonePair','Electron','RadicalCation','RadicalAnion','CirclePlus','CircleMinus','Dagger','DoubleDagger','Plus','Minus'):
+                raise ValueError('Unsupported native symbol')
+            x1,y1=_point(item['start']);x2,y2=_point(item['end'])
+            if x2<=x1 or y2<=y1:raise ValueError('Symbol end must be below/right of start')
+            node=ET.SubElement(page,'graphic',{'id':uid(),'GraphicType':'Symbol','SymbolType':symbol,
+                'BoundingBox':f'{x1} {y1} {x2} {y2}','color':color(item.get('color'))})
             remember(item,node)
         elif kind in ('rectangle','ellipse','bracket'):
             x1,y1=_point(item['start']); x2,y2=_point(item['end'])

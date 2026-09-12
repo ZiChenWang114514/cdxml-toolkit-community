@@ -70,6 +70,36 @@ Structures extracted from the saved CDXML match the five reviewed reference stru
 | Experiment workflows | Parse ELN exports, SciFinder RDF, LCMS or NMR reports, and assemble structured lab-book material. |
 | Agent service | Run through stdio locally or authenticated Streamable HTTP for a trusted remote computer. |
 
+## Laboratory drawings and scientific data
+
+Native TLC plates, native apparatus templates, processed 1D NMR analysis and editable scientific plots share a [runnable example guide](docs/scientific-workflows.md).
+
+| Native TLC plate | Apparatus from ChemDraw templates |
+| --- | --- |
+| ![Native TLC lanes and spots](assets/readme/scientific/tlc.png) | ![Editable laboratory apparatus assembled from native ChemDraw templates](assets/readme/scientific/apparatus.png) |
+| [Editable TLC](assets/readme/scientific/tlc.cdxml) | [Editable apparatus](assets/readme/scientific/apparatus.cdxml) |
+
+| Processed experimental NMR | Simulated reaction kinetics |
+| --- | --- |
+| ![Experimental 1D NMR spectrum rendered by ChemDraw](assets/readme/scientific/nmr.png) | ![Explicitly simulated first-order decay rendered by ChemDraw](assets/readme/scientific/kinetics.png) |
+| [Editable spectrum](assets/readme/scientific/nmr.cdxml) | [Editable plot](assets/readme/scientific/kinetics.cdxml) |
+
+NMR processing accepts real processed 1D NMRPipe or CSV data for peak picking and selected-region integration. It does not perform raw-FID processing, 2D interpretation or automatic atom assignment. TLC values are illustrative; kinetic data are explicitly simulated. [Data and template provenance](assets/readme/scientific/provenance.json).
+
+### Editable paper mechanism
+
+**Reference excerpt**
+
+![Reference mechanism showing compounds 192 through 199](assets/readme/mechanism/reference.png)
+
+**ChemDraw reconstruction**
+
+![Native ChemDraw reconstruction with eight structures, electron arrows and reaction conditions](assets/readme/mechanism/native.png)
+
+[Editable CDXML](assets/readme/mechanism/mechanism.cdxml) · [Native CDX](assets/readme/mechanism/mechanism.cdx) · [Side-by-side comparison](assets/readme/mechanism/comparison.png) · [Verification and source limitations](assets/readme/mechanism/provenance.json)
+
+Eight numbered structures and six chloride counterions retain their molecular inventory, depicted stereochemistry and formal charges through an actual ChemDraw CDXML → CDX → CDXML save cycle. Undefined R groups remain generic substituents. The reconstruction is visually reviewed, **not pixel-identical**: font metrics, electron-arrow paths, some bridge geometry and the placement of the delocalized charge indicators differ. The source's cropped recrystallization statement is not completed by inference.
+
 ## Quick start
 
 **Required:** 64-bit Python 3.10–3.13. Portable CDXML and RDKit operations run without ChemDraw. Native rendering, ChemScript, and editable Office objects require Windows plus a licensed desktop ChemDraw installation. Python 3.14 is not supported yet.
@@ -225,7 +255,7 @@ The scheme renderer accepts YAML, reaction JSON, and a compact text syntax descr
 ## Development
 
 ```powershell
-python -m pip install -e ".[dev,windows,office,analysis,image]"
+python -m pip install -e ".[dev,windows,office,analysis,image,scientific]"
 python -m pytest -m "not network" -q
 python -m build
 python -m twine check dist/*

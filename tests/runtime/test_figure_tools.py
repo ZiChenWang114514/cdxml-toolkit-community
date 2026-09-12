@@ -56,6 +56,19 @@ def compose(tmp_path,manifest,name='figure'):
     output=tmp_path/(name+'.cdxml')
     return compose_chemical_figure(str(path),str(output)),output
 
+
+def test_native_electron_symbols_preserve_molecule_graph(tmp_path):
+    _, output=compose(tmp_path,{'objects':[
+        {'type':'molecule','smiles':'[Cl-]','position':[50,50]},
+        {'type':'symbol','symbol':'LonePair','start':[46,35],'end':[52,37]},
+        {'type':'symbol','symbol':'CirclePlus','start':[75,25],'end':[81,31]}]})
+    root=ET.parse(output).getroot()
+    assert root.find(".//graphic[@SymbolType='LonePair']").get('GraphicType')=='Symbol'
+    assert root.find(".//graphic[@SymbolType='CirclePlus']") is not None
+    assert semantic_key(read_molecules(output)[0])==semantic_key(Chem.MolFromSmiles('[Cl-]'))
+    with pytest.raises(ValueError,match='Unsupported native symbol'):
+        compose(tmp_path,{'objects':[{'type':'symbol','symbol':'Unknown','start':[0,0],'end':[5,5]}]},'invalid-symbol')
+
 def test_fixed_figure_roundtrip_unique_ids_and_rich_labels(tmp_path):
     result,output=compose(tmp_path,{'objects':[
         {'id':'A','type':'molecule','smiles':AND,'position':[100,100],'cip_labels':True,'atom_numbers':True},

@@ -376,7 +376,14 @@ def _build_fragment(
         ]
 
         is_carbon = (sym == "C" and not charge and not isotope)
-        if not is_carbon:
+        is_variable = elem_num == 0
+        if is_variable:
+            # Element=0 is accepted by some parsers but cannot be opened by
+            # ChemDraw. Use its native generic substituent node instead.
+            if charge or isotope:
+                raise ValueError('Charged or isotopically labelled variable atoms are unsupported')
+            attrs.extend(['NodeType="GenericNickname"', 'GenericNickname="R"'])
+        elif not is_carbon:
             attrs.append(f'Element="{elem_num}"')
             if nh is not None:
                 attrs.append(f'NumHydrogens="{nh}"')
@@ -409,7 +416,9 @@ def _build_fragment(
                 f'LabelJustification="Left">'
             )
             # Use isotope-specific symbol for display (e.g. D for deuterium)
-            if sym == "H" and isotope == 2:
+            if is_variable:
+                display_text = "R"
+            elif sym == "H" and isotope == 2:
                 display_text = "D"
             elif sym == "H" and isotope == 3:
                 display_text = "T"
@@ -417,10 +426,21 @@ def _build_fragment(
                 display_text = sym
                 if nh is not None and nh > 0:
                     display_text += "H" if nh == 1 else f"H{nh}"
+            if isotope and not (sym == 'H' and isotope in (2, 3)):
+                lines.append(
+                    f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
+                    f'color="0" face="64">{int(isotope)}</s>'
+                )
             lines.append(
                 f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
                 f'color="0" face="{ACS_LABEL_FACE}">{xml_escape(display_text)}</s>'
             )
+            if charge:
+                charge_text = (str(abs(charge)) if abs(charge) > 1 else '') + ('+' if charge > 0 else '-')
+                lines.append(
+                    f'<s font="{ACS_LABEL_FONT}" size="{ACS_LABEL_SIZE}" '
+                    f'color="0" face="64">{charge_text}</s>'
+                )
             lines.append('</t>')
             lines.append('</n>')
 
