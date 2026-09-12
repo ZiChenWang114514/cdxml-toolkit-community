@@ -19,7 +19,7 @@
 </p>
 
 <p align="center">
-  <a href="#publication-figures">Publication figures</a> ·
+  <a href="#featured-demos">Featured demos</a> ·
   <a href="#quick-start">Quick start</a> ·
   <a href="#connect-an-agent">Connect an agent</a> ·
   <a href="#tool-profiles">Tool profiles</a> ·
@@ -27,21 +27,24 @@
   <a href="./docs/maintenance.md">Maintenance</a>
 </p>
 
-## Publication figures
+## Featured demos
 
-Create editable figures with explicit atom coordinates, six reaction-arrow styles, electron arrows, rich conditions, atom numbering and native-template preservation.
+Explore real paper images and data through native previews, reference comparisons and editable downloads.
 
-| Tool | Use it for |
-| --- | --- |
-| `compose_chemical_figure` | Fixed-coordinate structures, arrows, rich text, grids, highlights and native templates |
-| `rdkit_workbench` | Inspect atom indices and CIP labels; explicit stereo edits, bounded stereoisomer/tautomer enumeration, MCS and R-group decomposition |
-| `compare_figure_images` | Save side-by-side images and difference measurements for actual visual review |
+| Case | What it demonstrates | Available scope |
+| --- | --- | --- |
+| [Paper reaction scheme](#paper-scheme-demo) | Five structures, conditions, yields and wavy bonds | Complete figure; not pixel-identical |
+| [Sceptrin mechanism](#mechanism-demo) | Eight structures, electron arrows, charges and conditions | Complete figure; not pixel-identical |
+| [Native TLC](#tlc-demo) | Editable lanes, spots and Rf | Runnable example |
+| [Native apparatus](#apparatus-demo) | Assembly from native ChemDraw templates | Runnable example |
+| [Experimental NMR](#nmr-demo) | Real processed 1D data and an editable spectrum | Runnable example |
+| [Simulated reaction kinetics](#kinetics-demo) | Numerical data as editable curves | Runnable example |
+| [Complex synthesis: 101–112](#synthesis-101-demo) | Structures 101 and 102 with comparisons | Selected structures; full scheme pending |
+| [Complex synthesis: 113–122](#synthesis-113-demo) | Structure components 115–120 | Selected structures; full scheme pending |
 
-The renderer checks chemical identity by extracting structures from the saved CDXML. Wavy bonds remain unspecified; enhanced AND/OR/ABS stereo groups are retained. Chemistry checks and visual similarity are separate: neither a valid SMILES nor a low image-difference score proves a faithful paper reproduction. Unsupported fresh radical and non-tetrahedral depictions require a verified native template.
+<a id="paper-scheme-demo"></a>
 
-**Installation:** these features require the source version installed by the Quick Start commands; they are not included in the `v0.7.0a1` release.
-
-### From a paper screenshot to editable ChemDraw
+### Paper reaction scheme
 
 **Turn a published reaction scheme into an editable ChemDraw document.** This example preserves the five structures, reaction conditions, yields and compound labels shown in the reference image.
 
@@ -59,34 +62,9 @@ Structures extracted from the saved CDXML match the five reviewed reference stru
 
 **Visually reviewed and editable; not pixel-identical.** Font metrics, arrows and some line geometry still differ. Matching saved structures does not independently prove that every detail was recognized correctly.
 
-## What it provides
+<a id="mechanism-demo"></a>
 
-| Area | Practical result |
-| --- | --- |
-| Chemistry grounding | Resolve names, abbreviations, CAS numbers, formulas, and recognized image candidates through databases, ChemScript, OPSIN, or DECIMER. |
-| Controlled structure work | Compare molecules, apply named transformations, preserve stereochemistry, and inspect MCS-based structural differences. |
-| ChemDraw output | Draw molecules, clean or merge schemes, convert CDX/CDXML, and render native PNG or SVG files. |
-| Office workflows | Extract, replace, and batch-embed editable ChemDraw OLE objects in PowerPoint and Word. |
-| Experiment workflows | Parse ELN exports, SciFinder RDF, LCMS or NMR reports, and assemble structured lab-book material. |
-| Agent service | Run through stdio locally or authenticated Streamable HTTP for a trusted remote computer. |
-
-## Laboratory drawings and scientific data
-
-Native TLC plates, native apparatus templates, processed 1D NMR analysis and editable scientific plots share a [runnable example guide](docs/scientific-workflows.md).
-
-| Native TLC plate | Apparatus from ChemDraw templates |
-| --- | --- |
-| ![Native TLC lanes and spots](assets/readme/scientific/tlc.png) | ![Editable laboratory apparatus assembled from native ChemDraw templates](assets/readme/scientific/apparatus.png) |
-| [Editable TLC](assets/readme/scientific/tlc.cdxml) | [Editable apparatus](assets/readme/scientific/apparatus.cdxml) |
-
-| Processed experimental NMR | Simulated reaction kinetics |
-| --- | --- |
-| ![Experimental 1D NMR spectrum rendered by ChemDraw](assets/readme/scientific/nmr.png) | ![Explicitly simulated first-order decay rendered by ChemDraw](assets/readme/scientific/kinetics.png) |
-| [Editable spectrum](assets/readme/scientific/nmr.cdxml) | [Editable plot](assets/readme/scientific/kinetics.cdxml) |
-
-NMR processing accepts real processed 1D NMRPipe or CSV data for peak picking and selected-region integration. It does not perform raw-FID processing, 2D interpretation or automatic atom assignment. TLC values are illustrative; kinetic data are explicitly simulated. [Data and template provenance](assets/readme/scientific/provenance.json).
-
-### Editable paper mechanism
+### Sceptrin mechanism
 
 **Reference excerpt**
 
@@ -99,6 +77,114 @@ NMR processing accepts real processed 1D NMRPipe or CSV data for peak picking an
 [Editable CDXML](assets/readme/mechanism/mechanism.cdxml) · [Native CDX](assets/readme/mechanism/mechanism.cdx) · [Side-by-side comparison](assets/readme/mechanism/comparison.png) · [Verification and source limitations](assets/readme/mechanism/provenance.json)
 
 Eight numbered structures and six chloride counterions retain their molecular inventory, depicted stereochemistry and formal charges through an actual ChemDraw CDXML → CDX → CDXML save cycle. Undefined R groups remain generic substituents. The reconstruction is visually reviewed, **not pixel-identical**: font metrics, electron-arrow paths, some bridge geometry and the placement of the delocalized charge indicators differ. The source's cropped recrystallization statement is not completed by inference.
+
+<a id="tlc-demo"></a>
+
+### Native TLC
+
+Native TLC plate, lane and spot objects with illustrative Rf values.
+
+![Native TLC](assets/readme/scientific/tlc.png)
+
+[Editable CDXML](assets/readme/scientific/tlc.cdxml) · [Run this example](docs/scientific-workflows.md) · [Data and template provenance](assets/readme/scientific/provenance.json)
+
+<a id="apparatus-demo"></a>
+
+### Native apparatus
+
+Built from installed ChemDraw apparatus templates, preserving their editable native artwork.
+
+![Native apparatus](assets/readme/scientific/apparatus.png)
+
+[Editable CDXML](assets/readme/scientific/apparatus.cdxml) · [Run this example](docs/scientific-workflows.md) · [Data and template provenance](assets/readme/scientific/provenance.json)
+
+<a id="nmr-demo"></a>
+
+### Experimental NMR
+
+Real processed 1D NMR data, with peak picking and selected-region integration available. No automatic atom assignment.
+
+![Experimental NMR](assets/readme/scientific/nmr.png)
+
+[Editable CDXML](assets/readme/scientific/nmr.cdxml) · [Run this example](docs/scientific-workflows.md) · [Data and template provenance](assets/readme/scientific/provenance.json)
+
+<a id="kinetics-demo"></a>
+
+### Simulated reaction kinetics
+
+Explicitly simulated first-order decay demonstrates the numerical-data-to-figure workflow.
+
+![Simulated reaction kinetics](assets/readme/scientific/kinetics.png)
+
+[Editable CDXML](assets/readme/scientific/kinetics.cdxml) · [Run this example](docs/scientific-workflows.md) · [Data and template provenance](assets/readme/scientific/provenance.json)
+
+<a id="synthesis-101-demo"></a>
+
+### Complex synthesis: 101–112
+
+**Selected structures reconstructed; the full scheme is unfinished.** The comparison below covers the available components; expand the reference to view the complete paper figure.
+
+![Complex synthesis: 101–112 — component comparisons](assets/readme/synthesis-101-112/comparison.png)
+
+<details>
+<summary>View the complete paper reference</summary>
+
+![Complex synthesis: 101–112 — reference](assets/readme/synthesis-101-112/reference.png)
+
+</details>
+
+Editable structures: [101](assets/readme/synthesis-101-112/101.cdxml) · [102](assets/readme/synthesis-101-112/102.cdxml) · [Scope and provenance](assets/readme/synthesis-101-112/provenance.json)
+
+<a id="synthesis-113-demo"></a>
+
+### Complex synthesis: 113–122
+
+**Selected structures reconstructed; the full scheme is unfinished.** The comparison below covers the available components; expand the reference to view the complete paper figure.
+
+| 115 | 119 |
+| --- | --- |
+| ![115 — native electron arrows](assets/readme/synthesis-113-122/115.png) | ![119 — native electron arrows](assets/readme/synthesis-113-122/119.png) |
+
+<details>
+<summary>Compare structures 116–120 individually</summary>
+
+![116–120: reference and reconstructed structures](assets/readme/synthesis-113-122/comparison.png)
+
+</details>
+
+<details>
+<summary>View the complete paper reference</summary>
+
+![Complex synthesis: 113–122 — reference](assets/readme/synthesis-113-122/reference.png)
+
+</details>
+
+Editable structures: [115](assets/readme/synthesis-113-122/115.cdxml) · [116](assets/readme/synthesis-113-122/116.cdxml) · [117](assets/readme/synthesis-113-122/117.cdxml) · [118](assets/readme/synthesis-113-122/118.cdxml) · [119](assets/readme/synthesis-113-122/119.cdxml) · [120](assets/readme/synthesis-113-122/120.cdxml) · [Scope and provenance](assets/readme/synthesis-113-122/provenance.json)
+
+## Publication figures
+
+Create editable figures with explicit atom coordinates, six reaction-arrow styles, electron arrows, rich conditions, atom numbering and native-template preservation.
+
+| Tool | Use it for |
+| --- | --- |
+| `compose_chemical_figure` | Fixed-coordinate structures, arrows, rich text, grids, highlights and native templates |
+| `rdkit_workbench` | Inspect atom indices and CIP labels; explicit stereo edits, bounded stereoisomer/tautomer enumeration, MCS and R-group decomposition |
+| `compare_figure_images` | Save side-by-side images and difference measurements for actual visual review |
+
+The renderer checks chemical identity by extracting structures from the saved CDXML. Wavy bonds remain unspecified; enhanced AND/OR/ABS stereo groups are retained. Chemistry checks and visual similarity are separate: neither a valid SMILES nor a low image-difference score proves a faithful paper reproduction. Unsupported fresh radical and non-tetrahedral depictions require a verified native template.
+
+**Installation:** these features require the source version installed by the Quick Start commands; they are not included in the `v0.7.0a1` release.
+
+## What it provides
+
+| Area | Practical result |
+| --- | --- |
+| Chemistry grounding | Resolve names, abbreviations, CAS numbers, formulas, and recognized image candidates through databases, ChemScript, OPSIN, or DECIMER. |
+| Controlled structure work | Compare molecules, apply named transformations, preserve stereochemistry, and inspect MCS-based structural differences. |
+| ChemDraw output | Draw molecules, clean or merge schemes, convert CDX/CDXML, and render native PNG or SVG files. |
+| Office workflows | Extract, replace, and batch-embed editable ChemDraw OLE objects in PowerPoint and Word. |
+| Experiment workflows | Parse ELN exports, SciFinder RDF, LCMS or NMR reports, and assemble structured lab-book material. |
+| Agent service | Run through stdio locally or authenticated Streamable HTTP for a trusted remote computer. |
 
 ## Quick start
 
