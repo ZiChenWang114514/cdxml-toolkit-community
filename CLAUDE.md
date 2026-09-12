@@ -3,7 +3,7 @@
 ## What this is
 
 A chemistry office automation toolkit with 15 compatible core MCP tools and a
-35-tool community profile. Agents use these tools to draw molecules, render
+38-tool community profile. Agents use these tools to draw molecules, render
 reaction schemes, parse ELN exports, analyze LCMS/NMR data, complete lab books,
 and manipulate ChemDraw files in PowerPoint/Word.
 
@@ -131,7 +131,7 @@ sections:
 Parse ELN export files into semantic reaction JSON.
 
 ```
-parse_reaction(input_dir="experiments/KL-CC-001/")  # auto-discovers .cdxml/.csv/.rxn
+parse_reaction(input_dir="path/to/reaction/")  # auto-discovers .cdxml/.csv/.rxn
 parse_reaction(cdxml="experiment.cdxml", csv="experiment.csv")
 parse_reaction(cdxml="experiment.cdxml", output_path="reaction.json")
 ```

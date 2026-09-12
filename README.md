@@ -1,4 +1,4 @@
-![cdxml-toolkit-community with a ChemDraw-native Buchwald-Hartwig coupling that produces KL-CC-001](./assets/readme/hero.webp)
+![CDXML Toolkit: editable molecular structures and reaction schemes](./assets/readme/overview.svg)
 
 > **Platform support:** Portable CDXML and RDKit workflows run on Windows, macOS,
 > and Linux. ChemDraw COM rendering, ChemScript, and editable ChemDraw objects in
@@ -27,40 +27,25 @@
   <a href="./docs/maintenance.md">Maintenance</a>
 </p>
 
-## A real editable scheme
-
-The repository produces native chemistry artifacts, not screenshot-only output. The reaction below was exported directly from the editable CDXML through ChemDraw COM; its YAML description and PNG render are retained beside the source:
-
-![Two-step ChemDraw reaction scheme exported directly from editable CDXML](./assets/readme/two-step-scheme-native.svg)
-
-[YAML source](./samples/consolidated/two-step-scheme.yaml) ·
-[Editable CDXML](./samples/consolidated/two-step-scheme.cdxml) ·
-[Native PNG](./samples/consolidated/two-step-scheme.png) ·
-[More scheme examples](./experiments/scheme_dsl/showcase/INDEX.md)
-
 ## Publication figures
 
-Create editable figures with explicit atom coordinates, six reaction-arrow styles, electron arrows, rich conditions, atom numbering and native-template preservation. This native ChemDraw output exercises multi-reactant layout and stereochemical depiction:
+Create editable figures with explicit atom coordinates, six reaction-arrow styles, electron arrows, rich conditions, atom numbering and native-template preservation.
 
-![Native ChemDraw depiction test with two reactants, a reaction arrow and retained S stereochemistry](./samples/publication-figures/stereo-reaction.png)
-
-[Editable CDXML](./samples/publication-figures/stereo-reaction.cdxml) · [Agent Skill: drawing and review guide](https://github.com/ZiChenWang114514/chemdraw-skill/blob/main/skill/chemdraw/references/image-visual-review.md)
-
-| New tool | Use it for |
+| Tool | Use it for |
 | --- | --- |
 | `compose_chemical_figure` | Fixed-coordinate structures, arrows, rich text, grids, highlights and native templates |
 | `rdkit_workbench` | Inspect atom indices and CIP labels; explicit stereo edits, bounded stereoisomer/tautomer enumeration, MCS and R-group decomposition |
 | `compare_figure_images` | Save side-by-side images and difference measurements for actual visual review |
 
-The renderer checks chemical identity by reading back final CDXML coordinates. Wavy bonds remain unspecified; enhanced AND/OR/ABS stereo groups are retained. Chemistry checks and visual similarity are separate: neither a valid SMILES nor a low image-difference score proves a faithful paper reproduction. Unsupported fresh radical and non-tetrahedral depictions require a verified native template.
+The renderer checks chemical identity by extracting structures from the saved CDXML. Wavy bonds remain unspecified; enhanced AND/OR/ABS stereo groups are retained. Chemistry checks and visual similarity are separate: neither a valid SMILES nor a low image-difference score proves a faithful paper reproduction. Unsupported fresh radical and non-tetrahedral depictions require a verified native template.
 
-**Version scope:** these features are on `main` after the `v0.7.0a1` release tag. Use the source installation below; the existing release tag has not been moved.
+**Installation:** these features require the source version installed by the Quick Start commands; they are not included in the `v0.7.0a1` release.
 
 ### From a paper screenshot to editable ChemDraw
 
-**A worked reproduction of the supplied synthesis-scheme excerpt.** The agent segmented the figure, used DECIMER API recognition, redrew in ChemDraw, inspected side-by-side comparisons, corrected structures, and assembled visually transcribed conditions.
+**Turn a published reaction scheme into an editable ChemDraw document.** This example preserves the five structures, reaction conditions, yields and compound labels shown in the reference image.
 
-**Original paper excerpt — supplied by the user**
+**Original paper figure**
 
 ![Original paper scheme showing compounds 13a, 14, 15, 16 and the shared 17a/17b depiction](assets/readme/paper-replica/original.png)
 
@@ -68,11 +53,11 @@ The renderer checks chemical identity by reading back final CDXML coordinates. W
 
 ![Editable ChemDraw reconstruction preserving the original scheme orientation, conditions and compound labels](assets/readme/paper-replica/replica.png)
 
-[Download editable CDXML](assets/readme/paper-replica/replica.cdxml) · [Inspect structure-by-structure comparisons](assets/readme/paper-replica/structure-comparison.png) · [Case provenance](assets/readme/paper-replica/provenance.json)
+[Download editable CDXML](assets/readme/paper-replica/replica.cdxml) · [Inspect structure-by-structure comparisons](assets/readme/paper-replica/structure-comparison.png) · [Source and verification details](assets/readme/paper-replica/provenance.json)
 
-Review corrected OH/CH₃ and OMe/OH recognition errors, restored X/R abbreviations, and removed an unsupported configuration at a wavy bond. All five corrected structures passed final-CDXML readback in this case; 17a/17b retain the source's shared wavy-bond representation.
+Structures extracted from the saved CDXML match the five reviewed reference structures. The shared wavy bond for 17a/17b remains unspecified, as in the original figure.
 
-**Visually reviewed and editable; not pixel-identical.** Font metrics, arrows and some line geometry still differ. Chemical readback agreement does not establish absolute recognition accuracy.
+**Visually reviewed and editable; not pixel-identical.** Font metrics, arrows and some line geometry still differ. Matching saved structures does not independently prove that every detail was recognized correctly.
 
 ## What it provides
 

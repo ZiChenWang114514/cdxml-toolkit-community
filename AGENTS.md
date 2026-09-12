@@ -9,3 +9,7 @@
 - Do not record molecular content, file contents, credentials, or tool arguments in metrics or health responses.
 - Regenerate `docs/mcp-tools.md` and `docs/mcp-schema.json` after changing the tool registry.
 - Run `pytest -m "not network" -q`, package checks, and applicable native probes before release.
+
+## Public-facing language
+
+Write public documentation and example captions for readers without conversation history. Do not expose internal experiment identifiers, development stage names, handoff notes, session references or intermediate work logs. Explain technical terms when they help users; retain exact API names, scientific notation, paper compound numbering and necessary compatibility/version requirements. Keep test data identifiers out of homepage artwork and marketing examples.
