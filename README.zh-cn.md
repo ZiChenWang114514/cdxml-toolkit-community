@@ -1,6 +1,6 @@
 [English](README.md) · [简体中文](README.zh-cn.md)
 
-# CDXML Toolkit
+# CDXML Toolkit — ChemDraw MCP 服务器与 Python 化学绘图
 
 ![CDXML Toolkit：可编辑的分子结构与反应路线](assets/readme/overview.svg)
 

@@ -1,5 +1,7 @@
 [English](README.md) · [简体中文](README.zh-cn.md)
 
+# CDXML Toolkit — ChemDraw MCP Server and Python Chemical Drawing
+
 ![CDXML Toolkit: editable molecular structures and reaction schemes](./assets/readme/overview.svg)
 
 > **Platform support:** Portable CDXML and RDKit workflows run on Windows, macOS,
@@ -16,8 +18,8 @@
 </p>
 
 <p align="center">
-  <strong>A community-maintained MCP and Python runtime for reliable chemistry artifact work.</strong><br>
-  Resolve structures, compare molecules, build reaction schemes, inspect experiments, and deliver editable CDXML or ChemDraw objects in Office.
+  <strong>A ChemDraw MCP server and Python toolkit for editable chemical drawings.</strong><br>
+  Draw chemical structures, SAR and substrate-scope figures, and reaction schemes. Validate structures with RDKit and export editable CDXML or ChemDraw objects in Office.
 </p>
 
 <p align="center">
