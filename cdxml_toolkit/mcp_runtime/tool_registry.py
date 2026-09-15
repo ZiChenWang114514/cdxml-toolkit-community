@@ -18,6 +18,7 @@ from .extended_tools import PUBLIC_TOOLS
 from .official_overrides import OFFICIAL_OVERRIDES
 from .remote_tools import REMOTE_TOOLS
 from .figure_tools import FIGURE_TOOLS
+from .publication_figure import publication_figure
 
 
 @dataclass(frozen=True)
@@ -62,6 +63,7 @@ def _tool_timeout(name: str) -> int | None:
         "batch_compare_molecules": 300,
         "inspect_chemscript_sdk": 240,
         "execute_chemscript_sdk": 300,
+        "publication_figure": 600,
     }.get(name)
 
 
@@ -143,6 +145,9 @@ def build_registry(profile: str | None = None) -> dict[str, ToolSpec]:
     )
     extended_functions = _merge_named_tools(
         extended_functions, FIGURE_TOOLS, source="figure and RDKit tools"
+    )
+    extended_functions = _merge_named_tools(
+        extended_functions, {"publication_figure": publication_figure}, source="publication figures"
     )
     extended = {
         name: ToolSpec(

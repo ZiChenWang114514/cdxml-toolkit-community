@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import math
+import hashlib
+from collections import Counter
 from pathlib import Path
 from xml.etree import ElementTree as ET
 
@@ -248,6 +250,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             artifact_safety.publish_file(stage,target)
         return artifact_safety.with_artifacts({'ok':True,'output_path':str(target),
             'metadata':{'native_objects':'byte_identical','chemical_semantics':'unchanged_bytes',
+                        'document_chemistry_validation':{'status':'preserved',
+                            'method':'byte_identical_copy','scope':'unchanged_bytes',
+                            'sha256':hashlib.sha256(target.read_bytes()).hexdigest()},
                         'native_render':'not_run','visual_identity':'requires_same_renderer'}},[target])
     # Preserve native trees, including opaque native objects, without redraw.
     if template:
@@ -267,6 +272,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         ET.SubElement(fonts, 'font', {'id': '3', 'charset': 'iso-8859-1', 'name': 'Arial'})
         page = ET.SubElement(root, 'page', {'id': '1', 'BoundingBox': '0 0 1000 1000'})
         before = None
+    expected_inventory = Counter(before or {})
     next_id = max([int(n.get('id')) for n in root.iter() if n.get('id', '').isdigit()] + [1000]) + 1
     def uid():
         nonlocal next_id
@@ -380,6 +386,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             record=dict(item)
             if record.get('file'): record['file']=str(local_path(record['file']))
             mol=_mol(record)
+            expected_inventory.update(semantic_key(m) for m in Chem.GetMolFrags(mol, asMols=True))
             source=Chem.MolToCXSmiles(mol)
             if item.get('coordinates') is not None:
                 coords=item['coordinates']
@@ -572,13 +579,16 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         ET.indent(root)
         ET.ElementTree(root).write(stage,encoding='utf-8',xml_declaration=True)
         artifact_safety.validate_artifact(stage)
-        if before is not None:
-            after=document_inventory(stage)
-            if any(after[key]<count for key,count in before.items()):
-                raise ValueError('Template chemical identity changed')
+        serialized = ET.parse(stage)
+        after = document_inventory(stage) if serialized.find('.//fragment') is not None else Counter()
+        if after != expected_inventory:
+            raise ValueError('chemical_semantics_changed: final document inventory differs from template plus inputs')
+        document_validation = {'status':'preserved', 'method':'final_cdxml_roundtrip',
+            'scope':'rdkit_readback_consistency', 'molecules':sum(after.values()),
+            'sha256':hashlib.sha256(stage.read_bytes()).hexdigest()}
         artifact_safety.publish_file(stage,target)
     return artifact_safety.with_artifacts({'ok':True,'output_path':str(target),
-        'metadata':{'chemistry_validation':validations,'native_render':'not_run',
+        'metadata':{'chemistry_validation':validations,'document_chemistry_validation':document_validation,'native_render':'not_run',
                     'visual_identity':'not_evaluated','component_overlap_candidates':collisions,
                     'object_ids':named},
         'warnings':['Inspect overlap candidates and native rendering before acceptance.'] if collisions else []},[target])

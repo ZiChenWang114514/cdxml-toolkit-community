@@ -36,6 +36,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+publication = [
+    "openpyxl>=3.1",
+]
 scientific = [
     "numpy>=1.24",
     "scipy>=1.10",
@@ -81,6 +84,7 @@ opsin = [
     "starlette>=0.37",
 ]
 all = [
+    "openpyxl>=3.1",
     "numpy>=1.24",
     "scipy>=1.10",
     "matplotlib>=3.7",
@@ -114,6 +118,7 @@ Issues = "https://github.com/ZiChenWang114514/cdxml-toolkit-community/issues"
 Upstream = "https://github.com/leehiufung911/cdxml-toolkit"
 
 [project.scripts]
+cdxml-publication = "cdxml_toolkit.mcp_runtime.publication_figure:main"
 cdxml-render = "cdxml_toolkit.render.render_scheme:main"
 cdxml-layout = "cdxml_toolkit.layout.reaction_cleanup:main"
 cdxml-build = "cdxml_toolkit.cdxml_builder:main"

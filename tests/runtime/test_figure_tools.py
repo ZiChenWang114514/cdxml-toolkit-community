@@ -15,6 +15,39 @@ from cdxml_toolkit.mcp_runtime.structure_fidelity import repair_and_validate_dra
 STEREO='N[C@@H]1CC[C@H](O)C1'
 AND='CC[C@H](F)[C@H](C)O |&1:2,4|'
 
+@pytest.mark.parametrize('damage', ['missing', 'duplicate', 'mirror'])
+def test_final_serialized_inventory_rejects_damage(tmp_path, monkeypatch, damage):
+    from copy import deepcopy
+    original = ET.ElementTree.write
+    def damaged_write(tree, *args, **kwargs):
+        if tree.getroot().tag != 'CDXML' or not isinstance(args[0], Path):
+            return original(tree, *args, **kwargs)
+        page = tree.find('page')
+        fragment = page.find('fragment')
+        if damage == 'missing':
+            page.remove(fragment)
+        elif damage == 'duplicate':
+            page.append(deepcopy(fragment))
+        else:
+            for node in fragment.iter('n'):
+                x, y = map(float, node.get('p').split())
+                node.set('p', f'{-x} {y}')
+        return original(tree, *args, **kwargs)
+    monkeypatch.setattr(ET.ElementTree, 'write', damaged_write)
+    with pytest.raises(ValueError):
+        compose(tmp_path, {'objects':[{'type':'molecule','smiles':STEREO}]})
+    assert not (tmp_path/'figure.cdxml').exists()
+
+def test_document_receipt_counts_duplicate_species(tmp_path):
+    import hashlib
+    _, source = compose(tmp_path, {'objects':[{'type':'molecule','smiles':STEREO}]}, 'source')
+    result, output = compose(tmp_path, {'template_path':str(source),
+        'objects':[{'type':'molecule','smiles':STEREO,'position':[300,100]}]})
+    receipt = result['metadata']['document_chemistry_validation']
+    assert receipt['molecules'] == 2
+    assert receipt['sha256'] == hashlib.sha256(output.read_bytes()).hexdigest()
+    assert receipt['scope'] == 'rdkit_readback_consistency'
+
 @pytest.mark.parametrize('group',['&1','o1','a'])
 def test_enhanced_stereo_roundtrip(tmp_path,group):
     source=f'CC[C@H](F)[C@H](C)O |{group}:2,4|'

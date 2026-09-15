@@ -218,7 +218,7 @@ cdxml-doctor --no-tests
 
 ## 接入任意 Agent
 
-启动完整的 38 工具 stdio 服务：
+启动完整的 39 工具 stdio 服务：
 
 ```powershell
 cdxml-mcp
@@ -253,7 +253,7 @@ cdxml-mcp
 | `office` | 21 | Office 检查、替换、模板与批量嵌入 |
 | `analysis` | 20 | 实验发现、LCMS、实验记录与 SciFinder RDF |
 | `chemscript` | 20 | 分子比较与受控 ChemScript SDK 访问 |
-| `codex` | 38 | 完整本地与远程工具集合，兼容名称 |
+| `codex` | 39 | 完整本地与远程工具集合，兼容名称 |
 
 [MCP 工具参考](docs/mcp-tools.md)和 [JSON Schema](docs/mcp-schema.json)提供准确签名，CI 检查生成文件的一致性。
 
@@ -274,7 +274,7 @@ cdxml-mcp --transport streamable-http --host 0.0.0.0 --port 8029 `
 
 | 命令 | 用途 |
 | --- | --- |
-| `cdxml-mcp` | 完整 MCP 运行时，默认提供 38 个工具 |
+| `cdxml-mcp` | 完整 MCP 运行时，默认提供 39 个工具 |
 | `cdxml-mcp-core` | 兼容的 15 工具核心服务 |
 | `cdxml-doctor` | 只读诊断、测试及显式 ChemScript 配置 |
 | `cdxml-render` | 将 JSON、YAML 或紧凑文本绘制为 CDXML |
@@ -309,3 +309,7 @@ python -m twine check dist/*
 - 许可证：[MIT](LICENSE)
 
 原项目由有机化学博士 Hiu Fung Kevin Lee 主导，其文档记载使用 Claude Code（Opus 4.6）构建与测试。ChemDraw、Office、第三方数据和模板继续适用各自的许可证。
+
+## 从数据生成可持续修改的论文图
+
+将 CSV/XLSX 与可信结构生成底物拓展图或完整结构 SAR 图。化合物 ID 绑定结构和实验指标；在 ChemDraw 手工编辑后更新数据或替换结构，保留无关布局与注释。无法唯一匹配时输出冲突草稿。详见[使用指南与示例](docs/data-driven-figures.md)。XLSX 读取需要工具包的 `publication` 可选依赖。
