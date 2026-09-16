@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any, Optional
 
-from .decimer_api import DecimerUploadRefused, recognize_image
+from .decimer_api import DecimerAPIError, recognize_image
 
 
 def extract_structures_via_decimer_api(
@@ -27,7 +27,7 @@ def extract_structures_via_decimer_api(
             approved_sha256=approved_sha256,
             approved_origin=approved_origin,
         )
-    except DecimerUploadRefused as exc:
+    except DecimerAPIError as exc:
         return exc.as_result()
 
 
