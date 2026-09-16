@@ -1,4 +1,4 @@
-[English](README.md) · [简体中文](README.zh-cn.md)
+[English](README.md) · [Simplified Chinese](README.zh-cn.md)
 
 # CDXML Toolkit — ChemDraw MCP Server and Python Chemical Drawing
 

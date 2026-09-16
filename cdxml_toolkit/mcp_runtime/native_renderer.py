@@ -29,7 +29,7 @@ def _hresult(exc: BaseException) -> int | None:
 def _classified_error(exc: BaseException) -> NativeRenderError:
     message = str(exc)
     lowered = message.lower()
-    if _hresult(exc) == -2147221230 or "not licensed" in lowered or "未授权" in message:
+    if _hresult(exc) == -2147221230 or "not licensed" in lowered or "\u672a\u6388\u6743" in message:
         return NativeRenderError(
             "chemdraw_license_unavailable",
             "ChemDraw COM reports that the installed product license is unavailable",
