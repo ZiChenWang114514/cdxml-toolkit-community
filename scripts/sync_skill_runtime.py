@@ -35,6 +35,8 @@ RUNTIME_MODULES = {
 }
 
 RUNTIME_TESTS = {
+    "test_figure_revision.py",
+    "test_figure_validation.py",
     "test_artifact_safety.py",
     "test_chemistry_compare.py",
     "test_capabilities.py",
@@ -64,6 +66,23 @@ REFERENCE_EXPORTS = {
 
 
 def _wrapper_source(module_name: str) -> str:
+    bootstrap = ''
+    if module_name == 'runtime_discovery':
+        bootstrap = '''    import os as _os
+    from pathlib import Path as _Path
+
+    # Optional native COM must not block portable runtime discovery.
+    if _sys.platform != "win32":
+        _runtime.REQUIRED_IMPORTS = tuple(
+            name for name in _runtime.REQUIRED_IMPORTS if name != "win32com.client"
+        )
+    # The runtime package cannot infer the location of this Skill proxy.
+    if not _os.environ.get("CHEMDRAW_SKILL_ROOT") and not any(
+        arg == "--skill-root" or arg.startswith("--skill-root=")
+        for arg in _sys.argv[1:]
+    ):
+        _sys.argv.extend(["--skill-root", str(_Path(__file__).resolve().parent.parent)])
+'''
     return f'''"""Compatibility proxy for cdxml_toolkit.mcp_runtime.{module_name}."""
 
 from __future__ import annotations
@@ -74,6 +93,7 @@ import sys as _sys
 _runtime = _import_module("cdxml_toolkit.mcp_runtime.{module_name}")
 
 if __name__ == "__main__":
+{bootstrap}\
     _main = getattr(_runtime, "main", None)
     if _main is None:
         raise SystemExit("This compatibility module has no command-line interface.")

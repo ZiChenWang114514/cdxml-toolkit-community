@@ -657,7 +657,7 @@ def render_cdxml_files(
                 pass
         raise
 
-    metadata = {"format": format, "dpi": dpi}
+    metadata = {"format": format, "dpi": dpi, "renderer": "ChemDraw COM"}
     if dimensions:
         metadata["dimensions"] = dimensions
     return _contract(

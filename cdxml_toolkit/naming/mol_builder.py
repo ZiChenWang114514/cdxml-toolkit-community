@@ -2441,6 +2441,9 @@ def _build_mol_diff(input_smiles: str, output_smiles: str) -> Dict[str, Any]:
     if mw_in is not None and mw_out is not None:
         diff["delta_mw"] = round(mw_out - mw_in, 4)
 
+    from cdxml_toolkit.chemistry_diff import structural_diff
+    comparison = structural_diff(input_smiles, output_smiles)
+    diff.update(comparison)
     return diff
 
 

@@ -28,6 +28,17 @@ def _ascii(path: Path) -> bool:
     return str(path).isascii()
 
 
+def normalize_cdxml_staging(path: Path) -> None:
+    """Normalize only a staged XML declaration; preserve document content and source."""
+    if path.suffix.lower() != '.cdxml':
+        return
+    data = path.read_bytes()
+    match = re.match(br'((?:\xef\xbb\xbf)?<\?xml\s[^?]*encoding\s*=\s*[\x22\x27])utf-?8([\x22\x27][^?]*\?>)', data, re.I)
+    if match and b'encoding="UTF-8"' not in match.group(0):
+        data.decode('utf-8')
+        path.write_bytes(match.group(1) + b'UTF-8' + match.group(2) + data[match.end():])
+
+
 def _windows_short_path(path: Path) -> Path | None:
     if os.name != "nt" or not path.exists():
         return None
@@ -116,6 +127,7 @@ def ascii_inputs(sources: Sequence[str | Path]) -> Iterator[list[Path]]:
             suffix = source.suffix.lower() if source.suffix.isascii() else ".bin"
             native = workspace / f"input_{index:04d}{suffix}"
             shutil.copy2(source, native)
+            normalize_cdxml_staging(native)
             native_paths.append(native)
         yield native_paths
 
@@ -139,6 +151,7 @@ def ascii_input_directory(
                 suffix = item.suffix.lower()
                 native_item = native_dir / f"input_{index:04d}{suffix}"
                 shutil.copy2(item, native_item)
+                normalize_cdxml_staging(native_item)
                 replacements[os.path.normcase(str(native_item))] = str(item.resolve())
         yield native_dir, replacements
 
@@ -246,6 +259,7 @@ def bridge_file(
         native_source = native_parent / f"input{suffix.lower()}"
         native_destination = workspace / f"output{output_suffix.lower()}"
         shutil.copy2(source_path, native_source)
+        normalize_cdxml_staging(native_source)
         result = operation(native_source, native_destination)
         if not native_destination.exists():
             raise NativeIOError(

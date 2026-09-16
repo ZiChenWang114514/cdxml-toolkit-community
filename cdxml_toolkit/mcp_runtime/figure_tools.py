@@ -220,7 +220,7 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
     from ..image.structure_from_image import _rdkit_mol_to_atom_bond_dicts
     manifest_file = Path(manifest_path).expanduser().resolve()
     data = json.loads(manifest_file.read_text(encoding='utf-8-sig'))
-    allowed = {'version', 'template_path', 'edits', 'style', 'objects', 'steps', 'grid'}
+    allowed = {'version', 'template_path', 'edits', 'style', 'objects', 'steps', 'grid', 'crossings'}
     if set(data) - allowed:
         raise ValueError(f'Unknown manifest fields: {sorted(set(data) - allowed)}')
     if data.get('version', 1) != 1:
@@ -242,7 +242,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         path = Path(value).expanduser()
         return path.resolve() if path.is_absolute() else (manifest_file.parent / path).resolve()
     template = local_path(data['template_path']) if data.get('template_path') else None
-    if template and not any(data.get(k) for k in ('edits','objects','style','steps')):
+    if data.get('crossings') and not template:
+        raise ValueError('Crossings require a native template')
+    if template and not any(data.get(k) for k in ('edits','objects','style','steps','crossings')):
         target=artifact_safety.resolve_destination(source=template,output_path=output_path,tag='figure',suffix='.cdxml')
         with artifact_safety.staging_file(target) as stage:
             stage.write_bytes(template.read_bytes())
@@ -352,12 +354,16 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
         remember(item,node,(left,y-size,left+width,y+size*.3))
         return node
     for edit in data.get('edits',[]):
-        if set(edit)-{'id','translate','text','runs'}:
+        if set(edit)-{'id','translate','text','runs','display'}:
             raise ValueError('Template edits support id, translate, text/runs only')
         matches=[n for n in page.iter() if n.get('id')==str(edit['id'])]
         if len(matches)!=1:
             raise ValueError('Template edit needs one exact native object ID')
         node=matches[0]
+        if 'display' in edit:
+            from .figure_editing import edit_bond_display
+            edit_bond_display(node, edit)
+            continue
         if node.tag not in ('fragment','group','t','arrow','curve','graphic','bracketedgroup'):
             raise ValueError('Edit whole objects, not individual chemical atoms/bonds')
         if 'translate' in edit:
@@ -369,6 +375,9 @@ def compose_chemical_figure(manifest_path: str, output_path: str) -> dict:
             replacement=text(ET.Element('tmp'),{**edit,'position':pos})
             for child in list(node): node.remove(child)
             for child in list(replacement): node.append(child)
+    if data.get('crossings'):
+        from .figure_editing import apply_crossings
+        apply_crossings(page, data['crossings'])
     for item in objects:
         kind=item.get('type')
         fields={
@@ -625,12 +634,14 @@ FIGURE_TOOLS={f.__name__:f for f in (rdkit_workbench,compose_chemical_figure,com
 
 def main(argv=None):
     import argparse
+    from .figure_validation import validate_figure
+    cli_tools = {**FIGURE_TOOLS, 'validate_figure': validate_figure}
     parser=argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('tool',choices=sorted(FIGURE_TOOLS))
+    parser.add_argument('tool',choices=sorted(cli_tools))
     parser.add_argument('--arguments',type=Path,required=True,help='JSON keyword arguments file')
     args=parser.parse_args(argv)
     try:
-        result=FIGURE_TOOLS[args.tool](**json.loads(args.arguments.read_text(encoding='utf-8-sig')))
+        result=cli_tools[args.tool](**json.loads(args.arguments.read_text(encoding='utf-8-sig')))
     except Exception as exc:
         print(json.dumps({'ok':False,'error':{'type':type(exc).__name__,'message':str(exc)}},ensure_ascii=False))
         return 1

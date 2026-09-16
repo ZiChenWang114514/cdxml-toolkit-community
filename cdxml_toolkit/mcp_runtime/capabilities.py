@@ -19,11 +19,13 @@ def _distribution(name: str) -> str | None:
         return None
 
 
-def get_toolkit_capabilities() -> dict[str, Any]:
-    """Return versions, profile, tool schema digest, and local capability status."""
+def get_toolkit_capabilities(detail: str = "full") -> dict[str, Any]:
+    """Return runtime identity and diagnostics; detail='summary' omits tool signatures."""
     from .runtime_diagnostics import diagnose_runtime
     from .tool_registry import build_registry
 
+    if detail not in {"full", "summary"}:
+        raise ValueError("detail must be full or summary")
     profile = os.environ.get("CHEMDRAW_MCP_PROFILE", "codex")
     registry = build_registry(profile=profile)
     schema = [
@@ -49,12 +51,12 @@ def get_toolkit_capabilities() -> dict[str, Any]:
         for name, version in distributions.items()
         if version and name != "mcp"
     ]
-    warnings = []
+    warnings = list(diagnostics.get("warnings", []))
     if len(installed_toolkits) > 1:
         warnings.append(
             "Both cdxml-toolkit-community and cdxml-toolkit are installed; remove the legacy distribution."
         )
-    return {
+    result = {
         "ok": True,
         "outputs": {
             "profile": profile,
@@ -67,11 +69,14 @@ def get_toolkit_capabilities() -> dict[str, Any]:
                 "version": sys.version.split()[0],
                 "bits": 64 if sys.maxsize > 2**32 else 32,
             },
-            "capabilities": diagnostics.get("capabilities", {}),
+            "capabilities": diagnostics.get("outputs", {}).get("capabilities", {}),
         },
         "warnings": warnings,
         "metadata": {"content_free": True},
     }
+    if detail == "summary":
+        result["outputs"].pop("tools")
+    return result
 
 
 SYSTEM_TOOLS = {"get_toolkit_capabilities": get_toolkit_capabilities}

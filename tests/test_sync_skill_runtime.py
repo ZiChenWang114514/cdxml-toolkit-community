@@ -26,6 +26,9 @@ def test_skill_export_uses_package_proxies_and_copies_generated_references(tmp_p
     )
     assert 'import_module("cdxml_toolkit.mcp_runtime.mcp_server")' in server
     assert "def build_registry" not in server
+    discovery=(skill_root/'scripts'/'runtime_discovery.py').read_text()
+    assert 'CHEMDRAW_SKILL_ROOT' in discovery
+    assert 'win32com.client' in discovery
     assert "from cdxml_toolkit.mcp_runtime import mcp_server" in http_test
     assert (skill_root / "scripts" / "test_capabilities.py").is_file()
     assert (skill_root / "scripts" / "test_codex_config.py").is_file()
