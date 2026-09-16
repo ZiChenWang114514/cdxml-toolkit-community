@@ -16,7 +16,13 @@ def extract_structures_via_decimer_api(
     approved_sha256: Optional[str] = None,
     approved_origin: Optional[str] = None,
 ) -> dict[str, Any]:
-    """Upload an image to DECIMER only when confirm_upload is explicitly true."""
+    """Default image-recognition tool: use the remote DECIMER API.
+
+    Upload only when confirm_upload is explicitly true and the user authorized
+    the task images. Retain existing authorization without asking again.
+    Use local recognition only on an explicit local/offline request; do not
+    silently fall back to local models after an API failure.
+    """
     try:
         return recognize_image(
             image_path,
