@@ -7,6 +7,33 @@ from cdxml_toolkit.mcp_runtime import figure_validation as fv, native_io
 from cdxml_toolkit.mcp_runtime.official_overrides import draw_molecule
 
 
+@pytest.mark.parametrize('smiles,hydrogens,radicals', [
+    ('CCN', 7, 0), ('CC[NH]', 6, 1), ('CC(=O)O', 4, 0),
+    ('CC(=O)[O]', 3, 1), ('[2H]O[H]', 2, 0), ('[NH4+]', 4, 0),
+])
+def test_inventory_exposes_hydrogen_and_radical_changes(tmp_path, smiles, hydrogens, radicals):
+    source = tmp_path / 'input.cdxml'
+    source.write_text('<CDXML/>')
+    molecule = Chem.MolFromSmiles(smiles)
+    # Isolate inventory accounting from version-dependent CDXML parsing.
+    with mock.patch.object(fv, 'read_molecules', return_value=[molecule]):
+        observed = fv.inspect_document(source)['molecules'][0]
+    assert observed['hydrogen_count'] == hydrogens
+    assert observed['radical_electrons'] == radicals
+
+
+def test_native_hydrogen_loss_cannot_be_accepted(tmp_path):
+    source = tmp_path / 'input.cdxml'
+    source.write_text('<CDXML/>')
+    with mock.patch.object(fv, 'read_molecules', return_value=[Chem.MolFromSmiles('CCN')]):
+        before = fv.inspect_document(source)
+    with mock.patch.object(fv, 'read_molecules', return_value=[Chem.MolFromSmiles('CC[NH]')]):
+        after = fv.inspect_document(source)
+    result = fv.compare_inventories(before, after)
+    assert result['status'] == 'changed'
+    assert not result['composition_preserved']
+
+
 @pytest.mark.parametrize('bom',[b'',b'\xef\xbb\xbf'])
 def test_alias_normalized_only_in_staging(tmp_path,bom):
     source=tmp_path/'input.cdxml'

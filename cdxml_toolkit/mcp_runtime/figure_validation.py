@@ -36,6 +36,11 @@ def inspect_document(path):
             connectivity=Chem.MolToSmiles(m,isomericSmiles=False),
             semantic_key=semantic_key(m), formula=rdMolDescriptors.CalcMolFormula(m),
             formal_charge=Chem.GetFormalCharge(m),
+            # H vertices (including isotopes) plus implicit/bracket H counts.
+            # includeNeighbors=False avoids counting explicit H vertices twice.
+            hydrogen_count=sum(int(a.GetAtomicNum()==1)+a.GetTotalNumHs(includeNeighbors=False)
+                               for a in m.GetAtoms()),
+            radical_electrons=sum(a.GetNumRadicalElectrons() for a in m.GetAtoms()),
             assigned_centers=sum(c!='?' for _,c in Chem.FindMolChiralCenters(m,includeUnassigned=True))))
     return dict(status='passed', sha256=hashlib.sha256(path.read_bytes()).hexdigest(),
                 object_count=len(ids), molecule_count=len(molecules), molecules=molecules)
@@ -45,6 +50,8 @@ def compare_inventories(a,b):
     old,new = a['molecules'],b['molecules']
     connectivity = Counter(x['connectivity'] for x in old)==Counter(x['connectivity'] for x in new)
     semantic = Counter(x['semantic_key'] for x in old)==Counter(x['semantic_key'] for x in new)
+    composition = Counter((x['formula'],x['formal_charge']) for x in old)==Counter(
+        (x['formula'],x['formal_charge']) for x in new)
     pairs=[];available=list(new)
     for x in old:
         matches=[y for y in available if y['connectivity']==x['connectivity']]
@@ -58,6 +65,7 @@ def compare_inventories(a,b):
             'assigned_center_count_delta':y['assigned_centers']-x['assigned_centers'],'comparison':diff})
     return dict(status='preserved' if semantic else 'changed',
                 connectivity_preserved=connectivity, semantic_inventory_preserved=semantic,
+                composition_preserved=composition,
                 molecules=pairs, scope='reader_consistency_not_source_identity')
 
 

@@ -46,6 +46,18 @@ Explore real paper images and data through native previews, reference comparison
 | [Complex synthesis: 101–112](#synthesis-101-demo) | Full native scheme and electron arrows | Stereo acceptance pending; not 1:1 |
 | [Complex synthesis: 113–122](#synthesis-113-demo) | Full native scheme and electron arrows | Stereo acceptance pending; not 1:1 |
 
+<a id="stereo-reconstruction-demo"></a>
+
+### Twenty structures: resolving stereo-reader disagreement
+
+![ChemDraw reconstruction of a twenty-structure synthesis scheme](assets/readme/stereo-reconstruction/native.png)
+
+The source-oriented reconstruction disagreed between ChemScript and RDKit for 16 structures. The saved interoperability revision agrees for **20/20**, preserving the reviewed molecular targets. Compound **1** uses explicit stereobonds and therefore differs visually from the source. Same-scale ink IoU: **0.6960**; this is not pixel-identical or independent experimental stereo validation.
+
+[Editable CDXML](assets/readme/stereo-reconstruction/reconstruction.cdxml) · [Failure analysis, workflow and rights](assets/readme/stereo-reconstruction/CASE.md) · [Per-compound evidence and versions](assets/readme/stereo-reconstruction/verification.json)
+
+The embedded X-ray is a source crop. Paper-derived artwork is excluded from the MIT license; see the case's source and rights statement.
+
 <a id="paper-scheme-demo"></a>
 
 ### Paper reaction scheme
