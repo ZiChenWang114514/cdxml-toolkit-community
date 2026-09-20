@@ -7,6 +7,16 @@ from cdxml_toolkit.mcp_runtime import figure_validation as fv, native_io
 from cdxml_toolkit.mcp_runtime.official_overrides import draw_molecule
 
 
+@pytest.mark.parametrize('filename,field', [
+    ('reconstruction.cdxml', 'cdxml_sha256'), ('native.png', 'png_sha256'),
+])
+def test_published_case_matches_verified_bytes(filename, field):
+    import hashlib
+    case = Path(__file__).resolve().parents[2] / 'assets/readme/stereo-reconstruction'
+    evidence = json.loads((case / 'verification.json').read_text(encoding='utf-8'))
+    assert hashlib.sha256((case / filename).read_bytes()).hexdigest() == evidence[field]
+
+
 @pytest.mark.parametrize('smiles,hydrogens,radicals', [
     ('CCN', 7, 0), ('CC[NH]', 6, 1), ('CC(=O)O', 4, 0),
     ('CC(=O)[O]', 3, 1), ('[2H]O[H]', 2, 0), ('[NH4+]', 4, 0),
