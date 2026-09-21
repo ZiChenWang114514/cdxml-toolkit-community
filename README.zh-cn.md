@@ -37,6 +37,8 @@
 
 X-ray 保留原图裁片。论文衍生图像不适用仓库的 MIT 许可，使用前请查阅案例中的来源与权利说明。
 
+**已提供可运行的增量流程：**关联化学与绘图记录、验证缓存依赖、按变化局部检查，并分别验收原图版和兼容版。一次三处标题字号修改回放中，原生调用从8次减至2次，耗时从33.53秒降至8.88秒；这不是整图识别提速的结论。[原图画法版](assets/readme/stereo-reconstruction/source-oriented.cdxml) · [使用流程](https://github.com/ZiChenWang114514/chemdraw-skill/blob/main/skill/chemdraw/references/incremental-reconstruction.md) · [实测证据](assets/readme/stereo-reconstruction/incremental-verification.json)。
+
 <a id="paper-scheme-demo"></a>
 
 ### 论文反应路线
