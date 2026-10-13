@@ -80,7 +80,7 @@ and Trusted Publishing is configured with an approved GitHub environment.
 - `cdxml_toolkit.mcp_server` retains the 15 compatible core tools.
 - `cdxml_toolkit.mcp_runtime` owns worker isolation, native resource coordination,
   artifact validation, HTTP security, metrics, and the complete tool registry.
-- The `codex` profile contains 35 tools. Smaller profiles are tested by exact count.
+- The `codex` profile contains 39 tools. Smaller profiles are tested by exact count.
 - `scripts/sync_skill_runtime.py` exports package-backed compatibility proxies,
   runtime tests, and generated references into an installed ChemDraw Skill.
 - `docs/mcp-tools.md` and `docs/mcp-schema.json` are generated files. CI rejects drift.

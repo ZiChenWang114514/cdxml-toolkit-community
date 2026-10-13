@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import argparse
-import importlib.metadata
 import inspect
 import json
 from pathlib import Path
@@ -32,10 +31,7 @@ def _signature(function) -> str:
 
 def manifest(profile: str = "codex") -> dict:
     registry = build_registry(profile=profile)
-    try:
-        version = importlib.metadata.version("cdxml-toolkit-community")
-    except importlib.metadata.PackageNotFoundError:
-        from cdxml_toolkit import __version__ as version
+    from cdxml_toolkit import __version__ as version
     return {
         "schema_version": 1,
         "distribution": "cdxml-toolkit-community",

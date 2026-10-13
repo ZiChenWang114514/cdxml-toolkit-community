@@ -10,7 +10,7 @@ body:
     id: version
     attributes:
       label: Version
-      placeholder: 0.7.0a1
+      placeholder: Package version, source commit or wheel hash, and runtime_identity
     validations:
       required: true
   - type: dropdown

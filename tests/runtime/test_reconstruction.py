@@ -84,6 +84,23 @@ def test_local_visual_plan_does_not_call_native(drawing,tmp_path,monkeypatch):
     assert result['checked_fragments']==0
 
 
+def test_local_report_source_survives_publication_and_directory_move(drawing, tmp_path):
+    before = capture(drawing)
+    tree = ET.parse(drawing[1]); tree.find('.//n').set('p', '11 10'); tree.write(drawing[1])
+    after = capture(drawing)
+    folder = tmp_path / 'local'
+    r._local(after, r._plan(before, after), str(folder), native=False, cross_reader=False)
+    moved = tmp_path / 'moved'
+    folder.rename(moved)
+    report_path = moved / 'check-0/report.json'
+    report = json.loads(report_path.read_text())
+    assert not Path(report['source']).is_absolute()
+    source = (report_path.parent / report['source']).resolve()
+    assert source == moved / 'fragment-0.cdxml'
+    assert source.is_file()
+    assert r._hash(source) == report['basic']['sha256']
+
+
 def test_bond_display_and_crossing_changes_are_chemical(drawing):
     before = capture(drawing)
     tree = ET.parse(drawing[1]); tree.find('.//b').set('Display', 'WedgeBegin'); tree.write(drawing[1])

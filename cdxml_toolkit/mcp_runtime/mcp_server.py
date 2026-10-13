@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+from contextvars import ContextVar
 import functools
 import hmac
 import inspect
@@ -41,6 +42,7 @@ _NATIVE_LOCKS: weakref.WeakKeyDictionary = weakref.WeakKeyDictionary()
 _NATIVE_LOCKS_GUARD = threading.Lock()
 _LOOPBACK_HOSTS = {"localhost", "127.0.0.1", "::1"}
 _ENVIRONMENT_NAME = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\Z")
+_CALL_PROFILE: ContextVar[str | None] = ContextVar("chemdraw_profile", default=None)
 
 
 def _positive_env_int(name: str, default: int) -> int:
@@ -230,13 +232,19 @@ def _interpret_worker_result(
         }
     if returncode == 0 and envelope["ok"]:
         result = envelope.get("result")
-        result_dict = result if isinstance(result, dict) else {}
+        decoded = result
+        if isinstance(result, str):
+            try:
+                decoded = json.loads(result)
+            except json.JSONDecodeError:
+                pass
+        result_dict = decoded if isinstance(decoded, dict) else {}
         outputs = result_dict.get("outputs", result)
         warnings = result_dict.get("warnings", [])
         artifacts = result_dict.get("artifacts", [])
         result_metadata = result_dict.get("metadata", {})
-        return {
-            "ok": True,
+        outcome = {
+            "ok": result_dict.get("ok") is not False,
             "result": result,
             "outputs": outputs,
             "warnings": warnings if isinstance(warnings, list) else [str(warnings)],
@@ -247,6 +255,15 @@ def _interpret_worker_result(
                 "duration_ms": round(duration * 1000),
             },
         }
+        if not outcome["ok"]:
+            error = result_dict.get("error")
+            details = error if isinstance(error, dict) else {}
+            code = details.get("code")
+            outcome["error"] = {
+                "code": code if isinstance(code, str) and re.fullmatch(r"[a-z0-9_]{1,100}", code) else "tool_business_error",
+                "message": _safe_message(details.get("message") if details else error),
+            }
+        return outcome
     error = envelope.get("error") if isinstance(envelope.get("error"), dict) else {}
     return {
         "ok": False,
@@ -271,6 +288,9 @@ def _run_worker_impl(
     cancellation: threading.Event | None = None,
     holder: dict[str, typing.Any] | None = None,
 ) -> dict[str, typing.Any]:
+    if timeout_seconds is None:
+        spec = build_registry().get(name)
+        timeout_seconds = spec.timeout_seconds if spec is not None else None
     timeout = _timeout(timeout_seconds)
     input_limit = _positive_env_int(
         "CHEMDRAW_MCP_WORKER_INPUT_BYTES", DEFAULT_WORKER_INPUT_BYTES
@@ -283,6 +303,7 @@ def _run_worker_impl(
         "args": args,
         "kwargs": kwargs,
         "timeout_seconds": timeout,
+        "profile": _CALL_PROFILE.get() or os.environ.get("CHEMDRAW_MCP_PROFILE", "codex"),
     }).encode("utf-8")
     if len(payload) > input_limit:
         return {
@@ -450,6 +471,7 @@ def _adapt_tool(
     return_json_text: bool = False,
     timeout_seconds: int | None = None,
     resource_class: str | None = None,
+    profile: str | None = None,
 ) -> typing.Callable:
     """Preserve source parameters while routing execution through a worker."""
 
@@ -458,7 +480,11 @@ def _adapt_tool(
         options = {"timeout_seconds": timeout_seconds}
         if resource_class is not None:
             options["resource_class"] = resource_class
-        outcome = await _run_worker_async(name, args, kwargs, **options)
+        token = _CALL_PROFILE.set(profile)
+        try:
+            outcome = await _run_worker_async(name, args, kwargs, **options)
+        finally:
+            _CALL_PROFILE.reset(token)
         if not outcome["ok"]:
             raise RuntimeError(json.dumps(outcome, indent=2))
         result = outcome["result"]
@@ -645,6 +671,7 @@ def build_server(*, profile: str | None = None, **server_settings):
                 return_json_text=spec.return_json_text,
                 timeout_seconds=spec.timeout_seconds,
                 resource_class=spec.resource_class,
+                profile=selected_profile,
             )
         )
     _register_observability_routes(mcp, tool_count=len(registry))

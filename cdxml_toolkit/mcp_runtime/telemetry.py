@@ -18,6 +18,7 @@ _FAILURE_CODES = {
     "worker_protocol_error",
     "worker_failed",
     "tool_execution_failed",
+    "tool_business_error",
     "resource_busy",
 }
 _lock = threading.RLock()

@@ -19,7 +19,8 @@ except ImportError:  # pragma: no cover - Windows is the supported platform.
     winreg = None
 
 
-REQUIRED_IMPORTS = ("cdxml_toolkit", "mcp", "rdkit", "win32com.client")
+# Native/Office dependencies are checked only when those capabilities are requested.
+REQUIRED_IMPORTS = ("cdxml_toolkit", "mcp", "rdkit")
 PYTHON_PROBE_TIMEOUT_SECONDS = 30
 
 

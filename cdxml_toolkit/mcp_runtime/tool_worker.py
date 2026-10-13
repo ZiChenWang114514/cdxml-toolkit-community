@@ -144,7 +144,12 @@ def main() -> int:
             RDLogger.DisableLog("rdApp.*")
             from .tool_registry import build_registry
 
+            profile = payload.get("profile", os.environ.get("CHEMDRAW_MCP_PROFILE", "codex"))
+            build_registry(profile=profile)  # Validate the server's selected profile.
+            # Profiles filter public exposure, not internal calls between tool implementations.
             registry = build_registry()
+            # This worker handles one request; never mutate the parent server's environment.
+            os.environ["CHEMDRAW_MCP_PROFILE"] = profile
         tool_name = payload["tool"]
         spec = registry.get(tool_name)
         if spec is None:

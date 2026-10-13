@@ -222,6 +222,11 @@ def _local(snapshot, plan, output_dir, native=True, cross_reader=True):
             ET.ElementTree(doc).write(fragment_path,encoding='UTF-8',xml_declaration=True)
             validate_figure(str(fragment_path),str(stage/f'check-{i}'),native=native,cross_reader=cross_reader)
             check = _read(stage/f'check-{i}/report.json')
+            # The fragment is part of the published bundle, not an external source.
+            # Resolve this reference from report.json, including after a directory move.
+            check['source'] = f'../fragment-{i}.cdxml'
+            check['source_reference_base'] = 'report_directory'
+            (stage/f'check-{i}/report.json').write_text(_json(check), encoding='utf-8')
             results.append({'fragment_id':fid,'report':f'check-{i}/report.json',
                             'native':check['native'].get('status'),'cross_reader':check['cross_reader'].get('status')})
         result = {'results':results,'checked_fragments':len(results),'final_full_validation_required':True}

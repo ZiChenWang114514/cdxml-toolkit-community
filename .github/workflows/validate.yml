@@ -37,8 +37,7 @@ jobs:
       - name: Verify package metadata
         shell: pwsh
         run: |
-          python -c "import cdxml_toolkit; assert cdxml_toolkit.__version__ == '0.7.0a1'"
-          python -c "import importlib.metadata as m; assert m.version('cdxml-toolkit-community') == '0.7.0a1'"
+          python -c "import cdxml_toolkit, importlib.metadata as m; assert m.version('cdxml-toolkit-community') == cdxml_toolkit.__version__"
 
       - name: Verify generated MCP reference
         if: matrix.python-version == '3.12'

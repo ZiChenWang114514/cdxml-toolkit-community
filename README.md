@@ -218,6 +218,14 @@ The renderer checks chemical identity by extracting structures from the saved CD
 | Experiment workflows | Parse ELN exports, SciFinder RDF, LCMS or NMR reports, and assemble structured lab-book material. |
 | Agent service | Run through stdio locally or authenticated Streamable HTTP for a trusted remote computer. |
 
+## Source and release identity
+
+The current source prepares `0.7.0a2`; a local checkout is not evidence that this version has been published. The existing `v0.7.0a1` release predates publication-figure and incremental-reconstruction support. For reproducibility, record the full source commit or wheel hash as well as the version.
+
+`get_toolkit_capabilities(detail="summary")` reports the selected profile, source `runtime_identity.version`, and `runtime_identity.code_sha256`, separately from installed distribution metadata. The digest covers normalized Python sources, not dependencies or all package data. It identifies code edits without including molecule contents. A metadata mismatch warning means the editable checkout or installed package needs reinstalling; it is not an installation success claim.
+
+Business results with an explicit top-level `ok=false` propagate as MCP tool errors and failed calls in metrics. Reports successfully generated with individual checks marked failed/not-run retain those separate acceptance states. Default worker timeouts use the registered tool limit, then the global environment/default; an explicit per-call timeout takes precedence.
+
 ## Quick start
 
 **Required:** 64-bit Python 3.10–3.13. Portable CDXML and RDKit operations run without ChemDraw. Native rendering, ChemScript, and editable Office objects require Windows plus a licensed desktop ChemDraw installation. Python 3.14 is not supported yet.
