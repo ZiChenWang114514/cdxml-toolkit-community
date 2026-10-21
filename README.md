@@ -1,5 +1,8 @@
 [English](README.md) · [Simplified Chinese](README.zh-cn.md)
 
+> [!IMPORTANT]
+> **This repository has moved.** The toolkit is now maintained in the `toolkit/` folder of [ChemDraw Skill](https://github.com/ZiChenWang114514/chemdraw-skill/tree/main/toolkit), with its full history. This repository is archived and read-only. Open issues and pull requests there.
+
 # CDXML Toolkit — ChemDraw MCP Server and Python Chemical Drawing
 
 ![CDXML Toolkit: editable molecular structures and reaction schemes](./assets/readme/overview.svg)
