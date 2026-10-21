@@ -1,5 +1,8 @@
 [English](README.md) · [简体中文](README.zh-cn.md)
 
+> [!IMPORTANT]
+> **本仓库已迁移。** 工具包现在在 [ChemDraw Skill](https://github.com/ZiChenWang114514/chemdraw-skill/tree/main/toolkit) 的 `toolkit/` 目录中维护，并保留了完整历史。本仓库已归档，只读。请到新仓库提交 issue 和 pull request。
+
 # CDXML Toolkit — ChemDraw MCP 服务器与 Python 化学绘图
 
 ![CDXML Toolkit：可编辑的分子结构与反应路线](assets/readme/overview.svg)
